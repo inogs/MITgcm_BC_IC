@@ -1,0 +1,5 @@
+open ftp.ogs.trieste.it
+user arso "neva99!"
+cd /ALADIN_SI
+binary
+
