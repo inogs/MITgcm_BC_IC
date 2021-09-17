@@ -115,7 +115,7 @@ for var in ["T","S","U","V"]:
         Lon_Ind,Lat_Ind,C = read_XLS.get_RiverPHYS_Data(side, var, TIMELIST,Mask2)
        
     outBinaryFile = OUTPUTDIR +'OBC_'+ side + "_" + var + ".dat"
-    print outBinaryFile
+    print(outBinaryFile)
     F = open(outBinaryFile,'wb')
             
     nSideRivers = Lon_Ind.size
