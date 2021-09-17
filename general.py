@@ -10,7 +10,7 @@ import scipy.io.netcdf as NC
 
 
 NetCDF_phys_Vars ={'U':'vozocrtx', 'V':'vomecrty', 'T':'votemper', 'S':'vosaline'}
-NetCDF_phys_Files={'U':'U', 'V':'V', 'T':'T', 'S':'T'}
+NetCDF_phys_Files={'U':'U', 'V':'V', 'T':'T', 'S':'S'}
 
 class mask():
     def __init__(self, filename=None,loadtmask=True):
@@ -147,11 +147,11 @@ def space_intepolator_plane(mask2,mask1, M3d):
     M3d_out[~mask2.tmask] = np.nan
     
     if np.isnan(M3d_out[mask2.tmask]).any() : 
-        print "nans in space_interpolator_plane:",  np.isnan(M3d_out[mask2.tmask]).sum()
+        print("nans in space_interpolator_plane:",  np.isnan(M3d_out[mask2.tmask]).sum())
         for k in range(mask2.jpk):
             a = M3d_out[k,:,:]
             lev_mask = mask2.tmask[k,:,:]
-            print k, np.isnan(a[lev_mask]).sum()
+            print(k, np.isnan(a[lev_mask]).sum())
         
     return M3d_out
 
@@ -168,7 +168,7 @@ def space_intepolator_griddata(mask2,mask1, M3d):
         tmask1 = (M3d[jkb,:,:]<1.e+19) & ~np.isnan(M3d[jkb,:,:]) # indipendent from umask, vmask, or tmask
         #tmask1 = mask1.tmask[jkb,:,:]
         if tmask1.sum() == 0 :
-            print 'All nans, return to upper layer ' 
+            print('All nans, return to upper layer ')
             jkb = jkb -1
             #tmask1 = mask1.tmask[jkb,:,:]
             tmask1 = (M3d[jkb,:,:]<1.e+19) & ~np.isnan(M3d[jkb,:,:])
@@ -179,18 +179,17 @@ def space_intepolator_griddata(mask2,mask1, M3d):
         points[:,0] = X1[tmask1]
         points[:,1] = Y1[tmask1]
         values   = Map2d[tmask1]
-        #print k,nP
         MAP2d_nearest =interpolate.griddata( points, values, (X2, Y2), 'nearest', fill_value=np.nan)
         M3d_out[k,:,:] = MAP2d_nearest
 
     #M3d_out[~mask2.tmask] = np.nan # in order to avoid problems
     
     if np.isnan(M3d_out[mask2.tmask]).any() : 
-        print "nans in space_interpolator_griddata:",  np.isnan(M3d_out[mask2.tmask]).sum()
+        print("nans in space_interpolator_griddata:",  np.isnan(M3d_out[mask2.tmask]).sum())
         for k in range(mask2.jpk):
             a = M3d_out[k,:,:]
             lev_mask = mask2.tmask[k,:,:]
-            print k, np.isnan(a[lev_mask]).sum()
+            print(k, np.isnan(a[lev_mask]).sum())
         
     return M3d_out
 
