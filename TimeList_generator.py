@@ -25,5 +25,5 @@ from commons import genUserDateList as DL
 TL   = DL.getTimeList(args.datestart, args.dateend, args.delta )
 dateFormat="%Y%m%d-%H:%M:%S"
 for t in TL:
-    print t.strftime(dateFormat)
+    print(t.strftime(dateFormat))
 
