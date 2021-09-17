@@ -41,7 +41,7 @@ def argument():
 args = argument()
 
 from general import *
-import genUserDateList as DL
+from commons import genUserDateList as DL
 
 INPUT_DIR    = addsep(args.inputdir)
 OUTPUTDIR    = addsep(args.outputdir)

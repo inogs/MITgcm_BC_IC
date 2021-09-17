@@ -20,7 +20,7 @@ def argument():
     return parser.parse_args()
 
 args = argument()
-import genUserDateList as DL
+from commons import genUserDateList as DL
 
 TL   = DL.getTimeList(args.datestart, args.dateend, args.delta )
 dateFormat="%Y%m%d-%H:%M:%S"
