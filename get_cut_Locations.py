@@ -43,9 +43,9 @@ cut_lat_1= nearest_ind(Mask1.Lat, Mask2.Lat[0])
 cut_lat_2= nearest_ind(Mask1.Lat, Mask2.Lat[-1])
 
 
-print "export Index_W=" +str(cut_lon_1)
-print "export Index_E=" +str(cut_lon_2)
-print "export Index_S=" +str(cut_lat_1)
-print "export Index_N=" +str(cut_lat_2)
+print("export Index_W=" +str(cut_lon_1))
+print("export Index_E=" +str(cut_lon_2))
+print("export Index_S=" +str(cut_lat_1))
+print("export Index_N=" +str(cut_lat_2))
 
 

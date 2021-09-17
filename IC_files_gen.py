@@ -93,7 +93,7 @@ if args.modelvarlist:
     for var in MODELVARS[rank::nranks]:
         inputfile     = INPUTDIR + "ave." + TIMELIST[0] + "." + var + ".nc"    
         outBinaryFile = OUTPUTDIR + 'IC_' + var + ".dat"
-        print "rank %d working on %s" %(rank, outBinaryFile)
+        print("rank %d working on %s" %(rank, outBinaryFile))
         B=netcdf4.readfile(inputfile, var)
         #B[~Mask1.tmask] = np.NaN
         
@@ -109,7 +109,7 @@ else:
     for var in MODELVARS[rank::nranks]:        
         inputfile=INPUTDIR + TIMELIST[0][:8] + "_" + NetCDF_phys_Files[var] + ".nc"
         outBinaryFile = OUTPUTDIR + "IC_" + var + ".dat"
-        print "rank %d working on %s" %(rank, outBinaryFile)
+        print("rank %d working on %s" %(rank, outBinaryFile))
 
         B = netcdf4.readfile(inputfile, NetCDF_phys_Vars[var])[0,:Mask1.jpk,:,:]
         B[~Mask1.tmask] = np.NaN

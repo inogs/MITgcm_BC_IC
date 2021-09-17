@@ -1,17 +1,17 @@
 from openpyxl import load_workbook, Workbook
 import numpy as np
-import genUserDateList as DL
+from commons import genUserDateList as DL
 import os,sys
 from commons.utils import addsep
 
 xlsfile=os.getenv("RIVERDATA")
 if xlsfile is None: 
-    print "Error: Environment variables RIVERDATA - indicating the name of xls river file - must be defined."
+    print("Error: Environment variables RIVERDATA - indicating the name of xls river file - must be defined.")
     sys.exit(1)
 
 meteodir=os.getenv("RIVERMETEODIR")
 if meteodir is None: 
-    print "Error: Environment variables RIVERMETEODIR - indicating where to find discharge files - must be defined."
+    print("Error: Environment variables RIVERMETEODIR - indicating where to find discharge files - must be defined.")
     sys.exit(1)
 
 if len(meteodir) > 1: meteodir=addsep(meteodir)
@@ -64,11 +64,11 @@ class River():
         else:
             filename = meteodir + self.name + ".txt"
             if os.path.exists(filename):
-                print " ****************  Found  " + filename
+                print(" ****************  Found  " + filename)
                 TLfound,Q = self.read_Discharge_file(filename)
                 return self.Time_interp(Q, TLfound, timelist)
             else:
-                print "Warning : " + filename + " file not found. Climatological data will be used instead. "
+                print("Warning : " + filename + " file not found. Climatological data will be used instead. ")
                 return self.getClimTimeDischarge(timelist)
 
     def read_Discharge_file(self, filename):
