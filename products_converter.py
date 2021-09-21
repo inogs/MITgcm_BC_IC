@@ -1,8 +1,14 @@
 import argparse
+
 def argument():
     parser = argparse.ArgumentParser(description = '''
     Converts COPERNICUS products files for MIT chain.
-    Generates ave files by cutting along time dimension the product file
+    Works with MEDSEA_ANALYSISFORECAST_PHY_006_013 and MEDSEA_ANALYSISFORECAST_BGC_006_014.
+    Generates ave files by cutting
+    - along time dimension the product file
+    - down up to the depth provided by maskfile (products could have more depths)
+
+
      ''',formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(   '--inputfile', '-i',
                                 type = str,
@@ -82,6 +88,7 @@ else:
 OUTDIR=addsep(args.outputdir)
 
 TheMask = Mask(args.maskfile)
+jpk,_,_ = TheMask.shape
 
 
 M = netcdf4.readfile(args.inputfile, prod_var)
@@ -95,4 +102,4 @@ for it, t in enumerate(time):
         d = Dref + relativedelta(seconds=t)
     outfile=fileformat %(OUTDIR,d.strftime(dateformat), file_varname)
     print(outfile)
-    netcdf4.write_3d_file(M[it,:]*conversion, netcdf_varname, outfile, TheMask, thredds=True)
+    netcdf4.write_3d_file(M[it,:jpk,:,:]*conversion, netcdf_varname, outfile, TheMask, thredds=True)
