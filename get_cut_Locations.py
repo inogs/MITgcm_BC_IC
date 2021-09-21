@@ -41,11 +41,13 @@ cut_lon_1= nearest_ind(Mask1.Lon, Mask2.Lon[0])
 cut_lon_2= nearest_ind(Mask1.Lon, Mask2.Lon[-1])
 cut_lat_1= nearest_ind(Mask1.Lat, Mask2.Lat[0])
 cut_lat_2= nearest_ind(Mask1.Lat, Mask2.Lat[-1])
+cut_depth= nearest_ind(Mask1.Depth, Mask2.Depth[-1])
 
 
 print("export Index_W=" +str(cut_lon_1))
 print("export Index_E=" +str(cut_lon_2))
 print("export Index_S=" +str(cut_lat_1))
 print("export Index_N=" +str(cut_lat_2))
-
+print("export Index_T=0" )
+print("export Index_B=" +str(cut_depth))
 
