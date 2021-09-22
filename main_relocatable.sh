@@ -41,7 +41,7 @@ PHYSCUT_IC_DIR=/g100_scratch/userexternal/gbolzon0/MIT_CHAIN/PHYSCUT_IC_DIR
 PHYSIC_DIR=/g100_scratch/userexternal/gbolzon0/MIT_CHAIN/PHYSIC_DIR
 medmit_prex_or_die "python IC_files_gen.py -m $MASKFILE --nativemask $MASK_006_014_RED  -i $PHYSCUT_IC_DIR -o $PHYSIC_DIR -t $TIMELIST_START "
 
-fi
+
 
 PHYSCUT_BC_DIR=/g100_scratch/userexternal/gbolzon0/MIT_CHAIN/BC_CUT
 mkdir -p PHYSCUT_BC_DIR/SOUTH
@@ -57,3 +57,9 @@ mkdir -p $PHYS_BC_DIR
 export RIVERDATA=static-data/masks/CADEAU/discharges_CADEAU_N2.xlsx
 export RIVERMETEODIR=/g100_scratch/userexternal/gbolzon0/MIT_CHAIN/
 medmit_prex_or_die " python BC_files_gen_PHYS.py -t $TIMES_DAILY -m $MASKFILE --nativemask $MASK_006_014_RED -s S -i $PHYSCUT_BC_DIR/SOUTH  -o $PHYS_BC_DIR"
+fi
+
+OUTPUTDIR=/g100_scratch/userexternal/gbolzon0/MIT_CHAIN/BIO_IC_DIR
+medmit_prex_or_die "python IC_files_gen.py -m $MASKFILE --nativemask /g100_work/OGS_prod100/MIT/V1M-dev/V1/devel/wrkdir/BC_IC/mask_006_014_reduced.nc  -i /g100_work/OGS_prod100/MIT/V1M-dev/V1/devel/wrkdir/BC_IC/BIO/AVE/DAILY -o $OUTPUTDIR  -t /g100_work/OGS_prod100/MIT/V1M-dev/V1/devel/wrkdir/t0.txt -v /g100_work/OGS_prod100/MIT/V1M-dev/V1/devel/wrkdir/ogstm_state_vars.txt"
+
+

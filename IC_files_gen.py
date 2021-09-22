@@ -94,7 +94,7 @@ if args.modelvarlist:
         inputfile     = INPUTDIR + "ave." + TIMELIST[0] + "." + var + ".nc"    
         outBinaryFile = OUTPUTDIR + 'IC_' + var + ".dat"
         print("rank %d working on %s" %(rank, outBinaryFile))
-        B=netcdf4.readfile(inputfile, var)
+        B=netcdf4.readfile(inputfile, var)[0,:]
         #B[~Mask1.tmask] = np.NaN
         
         M = space_intepolator_griddata(Mask2,Mask1,B)
