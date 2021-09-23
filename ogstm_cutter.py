@@ -4,7 +4,7 @@ import argparse
 
 def argument():
     parser = argparse.ArgumentParser(description = '''
-    Cuts a single slice or a box in (longitude, latitude)
+    Cuts a single slice or a box in (longitude, latitude) and depth (using Mask levels)
     starting from BIO, ave or RST files.
     Arguments loncut and latcut define if the cut is a longitudinal or latitudinal slice
     or is a box. The entire depth is taken in account.
@@ -145,14 +145,14 @@ for time in TIMELIST[rank::nranks]:
         if cut_type is "Box": 
             ncvar=NCc.createVariable(var,'f', ('depth', 'lat','lon'))
             setattr(ncvar,'missing_value',1.e+20)
-            ncvar[:] = M[0,:,lat0:lat1,lon0:lon1]
+            ncvar[:] = M[0,:Mask.jpk,lat0:lat1,lon0:lon1]
         if cut_type is "Longitudinal":
             ncvar=NCc.createVariable(var,'f', ('depth', 'lat'))
             setattr(ncvar,'missing_value',1.e+20)
-            ncvar[:] = M[0,:,lat0:lat1,lon0]
+            ncvar[:] = M[0,:Mask.jpk,lat0:lat1,lon0]
         if cut_type is "Latitudinal":
             ncvar=NCc.createVariable(var,'f', ('depth', 'lon'))
             setattr(ncvar,'missing_value',1.e+20)
-            ncvar[:] = M[0,:,lat0,lon0:lon1]
+            ncvar[:] = M[0,:Mask.jpk,lat0,lon0:lon1]
 
         NCc.close()
