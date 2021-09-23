@@ -88,7 +88,7 @@ Lat = Mask.Lat[lat0:lat1]
 cut_type = "Box"
 if Lon.size==1: cut_type =  "Longitudinal"
 if Lat.size==1: cut_type =  "Latitudinal"
-print "cut type : " + cut_type
+print("cut type : " + cut_type)
 
 
 def create_Header(filename):
@@ -111,7 +111,7 @@ def create_Header(filename):
 
 
 for time in TIMELIST[rank::nranks]:     
-    print time
+    print(time)
        
        
     for var in MODELVARS:

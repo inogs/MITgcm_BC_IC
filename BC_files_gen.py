@@ -116,7 +116,7 @@ def writeCheckFile():
 for var in MODELVARS[rank::nranks]: 
        
     outBinaryFile = OUTPUTDIR +'OBC_'+ side + "_" + var + ".dat"
-    print outBinaryFile
+    print(outBinaryFile)
     F = open(outBinaryFile,'wb') 
     Lon_Ind,Lat_Ind,Conc = read_XLS.get_RiverBFM_Data(side, var)
     nSideRivers = Lon_Ind.size
