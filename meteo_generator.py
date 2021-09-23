@@ -68,7 +68,7 @@ def getFilename(INPUTDIR, date17):
         hours = D.hour + 24*days
         filename =  "%sasogs_%s00+00%02d.asc"  %( INPUTDIR, d.strftime("%Y%m%d"), hours)
         if os.path.exists(filename): return filename
-    print "ERROR: file not found: " + filename
+    print("ERROR: file not found: " + filename)
     return None
 
     
@@ -125,7 +125,7 @@ M = np.zeros((nFrames,jpj,jpi),dtype=DType)
 
 for it,time in enumerate(TIMELIST):
     filename = getFilename(INPUTDIR, time)
-    print time, filename
+    print(time, filename)
     ARSO=np.loadtxt(filename,dtype=DType)
     ARSO.resize((jpj,jpi))
     M[it,:,:] = ARSO
@@ -137,7 +137,7 @@ M['precip'] =  M['precip']/(3600*1000)
 #------------------------------------
 
 for var in ['swflux','lwflux','precip']:         # Provided as cumulated
-    print 'Differentiating '+var
+    print('Differentiating '+var)
     DIFFERENTIAL = np.diff(M[var],n=1,axis=0)
     ii = DIFFERENTIAL < 0 ; DIFFERENTIAL[ii] = 0  # precaution 
     M[var][1:,:,:] = DIFFERENTIAL
@@ -147,7 +147,7 @@ M['swflux'] =  -M['swflux']  # because in ocean model swflux is negative
 
 for var in VARS[2:]:
     outBinaryFile=OUTPUTDIR + "BC_" + var
-    print "writing " + outBinaryFile
+    print("writing " + outBinaryFile)
     F = open(outBinaryFile,'wb')
     for it, time  in enumerate(TIMELIST):
         FrameMatrix = M[var][it,:,:].copy()
