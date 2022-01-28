@@ -126,8 +126,11 @@ M = np.zeros((nFrames,jpj,jpi),dtype=DType)
 for it,time in enumerate(TIMELIST):
     filename = getFilename(INPUTDIR, time)
     print(time, filename)
-    ARSO=np.loadtxt(filename,dtype=DType)
-    ARSO.resize((jpj,jpi))
+    try:
+        ARSO=np.loadtxt(filename,dtype=DType)
+        ARSO.resize((jpj,jpi))
+    except:
+        print('****** Wrong meteo format')
     M[it,:,:] = ARSO
 
 # conversion   ----------------------
