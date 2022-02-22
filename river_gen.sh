@@ -1,5 +1,5 @@
 #! /bin/bash
-python TimeList_generator.py -s 20060101-12:00:00 -e 20170103-12:00:00 -d "days=1" > timelist.txt
+python TimeList_generator.py -s 20060101-12:00:00 -e 20170103-12:00:00 --days 1 > timelist.txt
 
 INPUTDIR=/marconi_scratch/userexternal/vdibiagi/REA_IC_BC/fiumi_squerin
 OUTDIR=/marconi_scratch/userexternal/vdibiagi/REA_IC_BC/fiumi_squerin/river_meteo_data
