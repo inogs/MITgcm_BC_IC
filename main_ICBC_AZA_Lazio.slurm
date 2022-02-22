@@ -1,35 +1,27 @@
 #! /bin/bash
 
-#SBATCH -n20
+#SBATCH -N1 -n20
 #SBATCH --time=5:50:00
 #SBATCH --job-name=jobFettine
-#SBATCH --error gzipP.err
-#SBATCH --output gzipP.out
-#SBATCH --account OGS20_PRACE_P
+#SBATCH --account OGS21_PRACE_P
 #SBATCH --partition gll_usr_prod
 
 
 #cd $SLURM_SUBMIT_DIR
 
 # su galileo
-module purge
-module load profile/base
-module load intel/pe-xe-2018--binary intelmpi/2018--binary
 module load autoload
-module load hdf5/1.8.18--intel--pe-xe-2018--binary netcdf/4.6.1--intel--pe-xe-2018--binary
-module load netcdf/4.6.1--intel--pe-xe-2018--binary 
-module load python/2.7.12 scipy/1.1.0--python--2.7.12  
-module load autoload mpi4py/3.0.0--intelmpi--2018--binary
-source /gpfs/work/OGS20_PRACE_P/COPERNICUS/py_env_2.7.12/bin/activate
-export PYTHONPATH=$PYTHONPATH:/gpfs/scratch/userexternal/vdibiagi/bit.sea
-#
-# FIXME era bit.sea-git
-
+module load intelmpi/oneapi-2021--binary
 module load nco
-module list
+LIBDIR=/g100_work/OGS21_PRACE_P/COPERNICUS/V8C/HOST/g100
+export    HDF5_DIR=$LIBDIR
+export NETCDF4_DIR=$LIBDIR
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$LIBDIR
+source /g100_work/OGS21_PRACE_P/COPERNICUS/py_env_3.6.8/bin/activate
+export PYTHONPATH=$PYTHONPATH:/g100_work/OGS21_PRACE_P/COPERNICUS/bit.sea
+
 
 MPI="mpirun -np 20"
-#MPI=" "
 
 . ./profile.inc
 
@@ -114,13 +106,16 @@ export RIVERMETEODIR=/gpfs/scratch/userexternal/vdibiagi/CADEAU/REA_IC_BC/fiumi_
 ######################################################
 
  
-if [ 1 == 0 ] ; then
+if [ 1 == 1 ] ; then
 
 ### Step 0.  GET MASK INFO  ##################################### 
 
-medmit_prex_or_die "gzip -cd static-data/masks/AF_uv/mask.nc.gz    > $MASK_24 " 
-medmit_prex_or_die "gzip -cd static-data/masks/AZA_Lazio/mask.nc.gz > $MASK_128 " #FIXME 
-medmit_prex_or_die "gzip -cd static-data/masks/INGV_AF/mask.nc.gz  > $MASK__F "  
+MASK__PHYS="$HOME/OPA/V7C/etc/static-data/MED24_141/meshmask.nc"
+MASK_OGSTM="$HOME/OPA/V7C/etc/static-data/MED24_125/meshmask.nc"
+
+BATHY=$RUNDIR/BC_IC/bathy.bin
+mit_prex_or_die "gzip -dc static-data/AZAL/bathy.gz > $BATHY"
+mit_prex_or_die "$MPI_1 python static-data/masks/AZAL/maskgen.py -b $BATHY -o $MASKFILE"
 
 medmit_prex_or_die " python get_cut_Locations.py -c $MASK__F -f $MASK_128 > $RUNDIR/set_cut_indexes_INGV_AF_vs_M128.sh "
 medmit_prex_or_die " python get_cut_Locations.py -c $MASK_24 -f $MASK_128 > $RUNDIR/set_cut_indexes_24_vs_M128.sh "
