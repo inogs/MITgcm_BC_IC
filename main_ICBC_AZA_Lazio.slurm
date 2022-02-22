@@ -110,8 +110,8 @@ if [ 1 == 1 ] ; then
 
 ### Step 0.  GET MASK INFO  ##################################### 
 
-MASK__PHYS="$HOME/OPA/V7C/etc/static-data/MED24_141/meshmask.nc"
-MASK_OGSTM="$HOME/OPA/V7C/etc/static-data/MED24_125/meshmask.nc"
+MASK__PHYS=/g100_scratch/userexternal/gbolzon0/meshmask_INGVfor_ogstm.nc
+MASK_OGSTM=/g100_scratch/userexternal/gcoidess/REANALISI_INTERIM/wrkdir/MODEL/meshmask.nc
 
 BATHY=$RUNDIR/BC_IC/bathy.bin
 mit_prex_or_die "gzip -dc static-data/AZAL/bathy.gz > $BATHY"
