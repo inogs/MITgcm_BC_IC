@@ -4,9 +4,9 @@ import argparse
 
 def argument():
     parser = argparse.ArgumentParser(description = '''
-        Creates ready OBC files for MITgcm only for BIO variables.
+        Creates ready OBC files for MITgcm only for PHYS variables.
     A boundary condition can derive from a previous run, often based on other mask, 
-    in that case BC_files_gen.py needs the directory containing NetCDF files of slices, 
+    in that case BC_files_gen_PHYS.py needs the directory containing NetCDF files of slices, 
     and the corresponding nativemask, and performs a linear interpolation.
     If the boundary condition does not require a previous run 
     (e.g. if it is on land) the interpdir argument must not be given.
@@ -63,6 +63,10 @@ if args.interpdir :
     INTERPDIR = addsep(args.interpdir)
     Mask1 = mask(args.nativemask)
     tmask1 = side_tmask(side,Mask1)
+    # valeria
+    umask1 = side_umask(side,Mask1)
+    vmask1 = side_vmask(side,Mask1)
+    #
 
 
 OUTPUTDIR = addsep(args.outputdir)
@@ -126,11 +130,22 @@ for var in ["T","S","U","V"]:
             filename = INTERPDIR +  t[:8] + "_" + NetCDF_phys_Files[var] + ".nc"
             if side in ["N","S"]:
                 B = netcdf4.readfile(filename, NetCDF_phys_Vars[var])[0,:Mask1.jpk,0,:]
-                B[~tmask1]=1.e+20
+                #B[~tmask1]=1.e+20
+                if var in ["T","S"]:
+                   B[~tmask1]=np.NaN
+                if var is "U":
+                   B[~umask1]=np.NaN
+                if var is "V":
+                   B[~vmask1]=np.NaN
             if side in ["E","W"]:
                 B = netcdf4.readfile(filename, NetCDF_phys_Vars[var])[0,:Mask1.jpk,:,0]
-                B[~tmask1]=1.e+20
-            B[B>1.e+19] = np.NaN
+                #B[~tmask1]=1.e+20
+                if var in ["T","S"]:
+                   B[~tmask1]=np.NaN
+                if var is "U":
+                   B[~umask1]=np.NaN
+                if var is "V":
+                   B[~vmask1]=np.NaN
             M = vertical_plane_interpolator(Mask2,Mask1,B,side)
                             
         for iRiver in range(nSideRivers):
@@ -138,7 +153,7 @@ for var in ["T","S","U","V"]:
                 M[:,Lat_Ind[iRiver]] = C[iRiver,it]
             if side is "S" or side is "N":
                 M[:,Lon_Ind[iRiver]] = C[iRiver,it]
-        #writeCheckFile()            
+        writeCheckFile()            
         F.write(M)
     F.write(M)
     F.write(M)
