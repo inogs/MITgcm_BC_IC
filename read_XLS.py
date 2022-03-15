@@ -74,7 +74,7 @@ class River():
     def read_Discharge_file(self, filename):
         ''' Reads file in the format yyyymmdd-hh:MM:ss Q
         '''
-        DT=[('date','S17'),('Q',np.float32)]
+        DT=[('date','U17'),('Q',np.float32)]
         A =np.loadtxt(filename, dtype=DT)
         return A['date'],A['Q']
     
