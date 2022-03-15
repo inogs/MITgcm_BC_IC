@@ -49,6 +49,8 @@ import scipy.io.netcdf as NC
 from commons import netcdf4
 import os
 import numpy as np
+from general import netCDF4
+#ultima riga qui sopra aggiunta da Valeria
 
 try :
     from mpi4py import MPI
@@ -66,12 +68,12 @@ def writeCheckFile():
     #Mcheck[~Mask2.tmask] = 1.0e+20
 
     checkfile = OUTPUTDIR +"CHECK/" + "IC_" + var + ".nc"    
-    NCout =NC.netcdf_file(checkfile,"w")    
+    NCout = netCDF4.Dataset(checkfile,'w') 
     NCout.createDimension("Lon"  ,Mask2.Lon.size)
     NCout.createDimension("Lat"  ,Mask2.Lat.size)
     NCout.createDimension("Depth",Mask2.jpk)    
-    ncvar = NCout.createVariable(var,'f',('Depth','Lat','Lon'))
-    setattr(ncvar, 'missing_value', 1.e+20) 
+    ncvar = NCout.createVariable(var,'f',('Depth','Lat', 'Lon'), fill_value=1.e+20)
+    setattr(ncvar,'fillValue',1.e+20)
     ncvar[:] = Mcheck
     NCout.close()
 
@@ -94,9 +96,8 @@ if args.modelvarlist:
         inputfile     = INPUTDIR + "ave." + TIMELIST[0] + "." + var + ".nc"    
         outBinaryFile = OUTPUTDIR + 'IC_' + var + ".dat"
         print("rank %d working on %s" %(rank, outBinaryFile))
-        B=netcdf4.readfile(inputfile, var)[0,:]
-        #B[~Mask1.tmask] = np.NaN
-        
+        B=netcdf4.readfile(inputfile, var)[:]
+        B[~Mask1.tmask] = np.NaN
         M = space_intepolator_griddata(Mask2,Mask1,B)
         
         writeCheckFile()
@@ -112,8 +113,14 @@ else:
         print("rank %d working on %s" %(rank, outBinaryFile))
 
         B = netcdf4.readfile(inputfile, NetCDF_phys_Vars[var])[0,:Mask1.jpk,:,:]
-        B[~Mask1.tmask] = np.NaN
-        #B[B>1.e+19]  = np.NaN
+        #B[~Mask1.tmask] = np.NaN
+        # inserisco i vari casi per le maschere
+        if var in ["T","S"]:
+                   B[~Mask1.tmask]=np.NaN
+        if var is "U":
+                   B[~Mask1.umask]=np.NaN
+        if var is "V":
+                   B[~Mask1.vmask]=np.NaN
     
         M = space_intepolator_griddata(Mask2,Mask1,B)
         writeCheckFile()
