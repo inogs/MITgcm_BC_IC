@@ -61,9 +61,6 @@ for line in file2stringlist(args.outputtimefile):
 
 
 
-
-
-
 def Load_Data(DATADIR, TimeList,before,after,var, datatype):
     Before_date17 = TimeList[before].strftime(dateFormat)
     After__date17 = TimeList[after ].strftime(dateFormat)
@@ -78,20 +75,25 @@ def Load_Data(DATADIR, TimeList,before,after,var, datatype):
     elif datatype=='AVE':
         Before_File = "ave." + Before_date17 + ".nc"
         After__File = "ave." + After__date17 + ".nc"    
-    print "loading " + Before_File, After__File, 'for ', var
+    #print "loading " + Before_File, After__File, 'for ', var
+    print("loading " + Before_File, After__File, 'for ', var)
     
-    ncB = NC.netcdf_file(DATADIR + Before_File,'r')
-    ncA = NC.netcdf_file(DATADIR + After__File,'r')
+    #ncB = NC.netcdf_file(DATADIR + Before_File,'r')
+    #ncA = NC.netcdf_file(DATADIR + After__File,'r')
     
-    Before_Data = ncB.variables[var].data[0,:,:,:].copy().astype(np.float32)
-    After__Data = ncA.variables[var].data[0,:,:,:].copy().astype(np.float32)
+    #Before_Data = ncB.variables[var].data[0,:,:,:].copy().astype(np.float32)
+    #After__Data = ncA.variables[var].data[0,:,:,:].copy().astype(np.float32)
     
-    ncA.close()
+    #ncA.close()
+    #ncB.close()
+    #valeria
+    ncB=netCDF4.Dataset(DATADIR + Before_File,'r')
+    ncA=netCDF4.Dataset(DATADIR + After__File,'r')
+    Before_Data = np.array(ncB[var])
+    After__Data = np.array(ncA[var])
     ncB.close()
+    ncA.close()
     return Before_Data, After__Data
-
-
-
 
 
 Mask = mask(args.maskfile)
@@ -107,7 +109,8 @@ for var in VARLIST:
     
     for t in OutputTIMELIST:
         outfile = OUTPUTDIR  +  "ave." + t.strftime(dateFormat) +"." + var + ".nc"
-        print outfile
+        #print outfile
+        print(outfile) 
         
         before,after,T_interp = Time_Interpolation(t,Input_TIMELIST)
         if before>BEFORE:
@@ -117,11 +120,13 @@ for var in VARLIST:
         Actual = (1-T_interp)*Before_DATA + T_interp*After__DATA
         Actual[tmask] = 1.e+20
         
-        NCout = NC.netcdf_file(outfile,'w')
+        #NCout = NC.netcdf_file(outfile,'w') #valeria
+        NCout = netCDF4.Dataset(outfile,'w') 
         NCout.createDimension("lon",Mask.Lon.size)
         NCout.createDimension("lat",Mask.Lat.size)
         NCout.createDimension("depth",Mask.jpk)
         NCout.createDimension("time", 1)
+        
         ncvar = NCout.createVariable("lon",'f',('lon',))
         ncvar[:] = Mask.Lon
         ncvar = NCout.createVariable("lat",'f',('lat',))
@@ -129,11 +134,13 @@ for var in VARLIST:
         ncvar = NCout.createVariable("depth",'f',('depth',))
         ncvar[:] = Mask.Depth
             
-        ncvar = NCout.createVariable(var,'f',('time','depth','lat','lon'))
-        setattr(ncvar,'missing_value',1.e+20)
+        ncvar = NCout.createVariable(var,'f',('time','depth','lat','lon'), fill_value=1.e+20)
+        setattr(ncvar,'fillValue',1.e+20)
         ncvar[:] = Actual
         
         NCout.close()
+        
+        
      
     
     
