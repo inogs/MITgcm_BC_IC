@@ -70,7 +70,6 @@ args = argument()
 import read_XLS
 
 
-
 side   = args.side;
 Mask2  = mask(args.outmaskfile)
 tmask2 = side_tmask(side,Mask2)
@@ -87,7 +86,6 @@ os.system("mkdir -p " + OUTPUTDIR)
 os.system("mkdir -p " + OUTPUTDIR + "CHECK")  
 
 
-
 def writeCheckFile():
     checkfile = OUTPUTDIR +  "CHECK/OBC_"  + side + "." + t + "." + var + ".nc"
     Mcheck = M.copy()
@@ -98,21 +96,19 @@ def writeCheckFile():
         missing_value=0
     
     
-    NCout =NC.netcdf_file(checkfile,"w")    
+    NCout = netCDF4.Dataset(checkfile,'w')  
     NCout.createDimension("Lon"  ,Mask2.Lon.size)
     NCout.createDimension("Lat"  ,Mask2.Lat.size)
     NCout.createDimension("Depth",Mask2.jpk)
     if side is "E" or side is "W":    
-        ncvar = NCout.createVariable(var,'f',('Depth','Lat'))
+        ncvar = NCout.createVariable(var,'f',('Depth','Lat'), fill_value=1.e+20) 
     if side is "N" or side is "S":
-        ncvar = NCout.createVariable(var,'f',('Depth','Lon'))
-    setattr(ncvar, 'missing_value', missing_value) 
+        ncvar = NCout.createVariable(var,'f',('Depth','Lon'), fill_value=1.e+20)
+    setattr(ncvar,'fillValue',1.e+20)
     ncvar[:] = Mcheck
     NCout.close()
     
-
-
-    
+  
 for var in MODELVARS[rank::nranks]: 
        
     outBinaryFile = OUTPUTDIR +'OBC_'+ side + "_" + var + ".dat"
@@ -125,10 +121,9 @@ for var in MODELVARS[rank::nranks]:
         
         if args.interpdir:
             filename = INTERPDIR + "ave." + t + "." + var + ".nc"
-            NCin = NC.netcdf_file(filename,'r')
-            B = NCin.variables[var].data.copy()
-            NCin.close()
-                        
+            NCin = netCDF4.Dataset(filename,'r')
+            B = np.array(NCin[var])
+            NCin.close()                      
             B[~tmask1] = np.NaN
             M = vertical_plane_interpolator(Mask2,Mask1,B,side)
                             
