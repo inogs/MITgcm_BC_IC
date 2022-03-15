@@ -10,7 +10,7 @@ import scipy.io.netcdf as NC
 
 
 NetCDF_phys_Vars ={'U':'vozocrtx', 'V':'vomecrty', 'T':'votemper', 'S':'vosaline'}
-NetCDF_phys_Files={'U':'U', 'V':'V', 'T':'T', 'S':'S'}
+NetCDF_phys_Files={'U':'U', 'V':'V', 'T':'T', 'S':'T'}
 
 class mask():
     def __init__(self, filename=None,loadtmask=True):
@@ -20,6 +20,8 @@ class mask():
             self.Depth = 0.
             self.jpk   = 0
             self.tmask = 0
+            self.umask = 0
+            self.vmask = 0
             self.jpi   = 0
             self.jpj   = 0
         else:
@@ -51,10 +53,34 @@ class mask():
                     self.tmask = np.array(m[:,:,:], dtype=np.bool)
                 elif len(m.shape) == 2:
                     self.tmask = np.array(m[:,:], dtype=np.bool)
-
+          
             else:
                 self.tmask = None
+            
+            if ("umask" in dset.variables):
+                m = dset.variables["umask"]
+                if len(m.shape) == 4:
+                    self.umask = np.array(m[0,:,:,:], dtype=np.bool)
+                elif len(m.shape) == 3:
+                    self.umask = np.array(m[:,:,:], dtype=np.bool)
+                elif len(m.shape) == 2:
+                    self.umask = np.array(m[:,:], dtype=np.bool)
+            else:
+                self.umask = None
+
+            if ("vmask" in dset.variables):
+                m = dset.variables["vmask"]
+                if len(m.shape) == 4:
+                    self.vmask = np.array(m[0,:,:,:], dtype=np.bool)
+                elif len(m.shape) == 3:
+                    self.vmask = np.array(m[:,:,:], dtype=np.bool)
+                elif len(m.shape) == 2:
+                    self.vmask = np.array(m[:,:], dtype=np.bool)
+            else:
+                self.vmask = None
+
             dset.close()
+
             self.delta = self.Lon[1] - self.Lon[0]
             self.jpk = self.Depth.size
             self.jpi = self.Lon.size
@@ -71,9 +97,9 @@ class mask():
         if side is "E" or side is "W":
             return E_width*Depth
         if side is "S":
-            return E_width*Depth*np.sin(self.Lat[0])
+            return E_width*Depth*np.cos(np.deg2rad(self.Lat[0]))
         if side is "N":
-            return E_width*Depth*np.sin(self.Lat[-1])            
+            return E_width*Depth*np.cos(np.deg2rad(self.Lat[-1]))                
      
 
 
@@ -172,6 +198,11 @@ def space_intepolator_griddata(mask2,mask1, M3d):
             jkb = jkb -1
             #tmask1 = mask1.tmask[jkb,:,:]
             tmask1 = (M3d[jkb,:,:]<1.e+19) & ~np.isnan(M3d[jkb,:,:])
+            # added by Valeria for V in AZA Lazio
+            if tmask1.sum() == 0 :
+                    print('All nans, return to upper layer ') 
+                    jkb = jkb -1
+                    tmask1 = (M3d[jkb,:,:]<1.e+19) & ~np.isnan(M3d[jkb,:,:])
         
         Map2d = M3d[jkb,:,:]
         nP = tmask1.sum()
@@ -200,6 +231,20 @@ def side_tmask(side,mask):
     if side is "E" : tmask = mask.tmask[:,:,-1]
     if side is "W" : tmask = mask.tmask[:,:,0]    
     return tmask
+
+def side_umask(side,mask):
+    if side is "N" : umask = mask.umask[:,-1,:]
+    if side is "S" : umask = mask.umask[:,0,:]
+    if side is "E" : umask = mask.umask[:,:,-1]
+    if side is "W" : umask = mask.umask[:,:,0]
+    return umask
+
+def side_vmask(side,mask):
+    if side is "N" : vmask = mask.vmask[:,-1,:]
+    if side is "S" : vmask = mask.vmask[:,0,:]
+    if side is "E" : vmask = mask.vmask[:,:,-1]
+    if side is "W" : vmask = mask.vmask[:,:,0] 
+    return vmask
 
 def zeroPadding(side,mask):
     if side is 'E' or side is 'W':
