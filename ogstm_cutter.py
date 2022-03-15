@@ -132,9 +132,6 @@ for time in TIMELIST[rank::nranks]:
         inputfile = INPUTDIR  +  filename
         
         try:        
-            # NCin = NC.netcdf_file(inputfile,'r')
-            # M = NCin.variables[invar].data.copy().astype(np.float32)
-            # NCin.close()
             D=netCDF4.Dataset(inputfile,'r')
             M = np.array(D[invar])
             D.close()
