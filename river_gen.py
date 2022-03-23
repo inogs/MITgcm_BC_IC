@@ -35,7 +35,7 @@ DATA  = np.loadtxt(river_orig, dtype=[('riv',np.float32)])
 
 n=len(DATA)
 
-OUT=np.zeros((n,),dtype=[('time',"S17"), ('riv',np.float32)])
+OUT=np.zeros((n,),dtype=[('time',"U17"), ('riv',np.float32)]) #fixme era S17
 OUT['time']=TIMES
 OUT['riv']=DATA
 
