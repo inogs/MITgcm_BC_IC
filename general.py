@@ -68,12 +68,12 @@ class mask():
         Radius=6371000.0  #m
         Depth = self.CellBottoms[nCells-1]
         E_width= np.deg2rad(self.delta)*Radius
-        if side is "E" or side is "W":
+        if side in ["E", "W"]:
             return E_width*Depth
-        if side is "S":
-            return E_width*Depth*np.sin(self.Lat[0])
-        if side is "N":
-            return E_width*Depth*np.sin(self.Lat[-1])            
+        if side == "S":
+            return E_width*Depth*np.cos(self.Lat[0]*np.pi/180)
+        if side == "N":
+            return E_width*Depth*np.cos(self.Lat[-1]*np.pi/180)
      
 
 
@@ -82,11 +82,11 @@ def vertical_plane_interpolator(mask2,mask1,M2d,side):
     M2d size is [jpk, LonSize, or LatSize]
     '''
 
-    if side is 'E' or side is 'W' :
+    if side in [ 'E','W' ] :
         M=np.zeros((mask2.jpk,mask2.Lat.size),dtype=np.float32)
         X1 = mask1.Lat
         X2 = mask2.Lat
-    if side is 'N' or  side is 'S' :        
+    if side in ['N', 'S'] :
         M=np.zeros((mask2.jpk,mask2.Lon.size),dtype=np.float32)
         X1 = mask1.Lon
         X2 = mask2.Lon
@@ -195,14 +195,14 @@ def space_intepolator_griddata(mask2,mask1, M3d):
 
 
 def side_tmask(side,mask):
-    if side is "N" : tmask = mask.tmask[:,-1,:]
-    if side is "S" : tmask = mask.tmask[:,0,:]
-    if side is "E" : tmask = mask.tmask[:,:,-1]
-    if side is "W" : tmask = mask.tmask[:,:,0]    
+    if side == "N" : tmask = mask.tmask[:,-1,:]
+    if side == "S" : tmask = mask.tmask[:,0,:]
+    if side == "E" : tmask = mask.tmask[:,:,-1]
+    if side == "W" : tmask = mask.tmask[:,:,0]
     return tmask
 
 def zeroPadding(side,mask):
-    if side is 'E' or side is 'W':
+    if side in [ 'E' , 'W' ]:
         return np.zeros((mask.jpk, mask.Lat.size),dtype=np.float32)
-    if side is "S" or side is "N":
+    if side in ["S" , "N" ]:
         return np.zeros((mask.jpk, mask.Lon.size),dtype=np.float32)
