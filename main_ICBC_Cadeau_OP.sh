@@ -8,24 +8,24 @@
 #
 
 
-cd $SLURM_SUBMIT_DIR
+#cd $SLURM_SUBMIT_DIR
 
-module purge
-module load profile/base
-module load intel/pe-xe-2018--binary intelmpi/2018--binary
-module load autoload
-module load hdf5/1.8.18--intel--pe-xe-2018--binary netcdf/4.6.1--intel--pe-xe-2018--binary
-module load numpy/1.15.2--python--2.7.12 mpi4py/3.0.0--intelmpi--2018--binary
-source /gpfs/work/OGS20_PRACE_P/COPERNICUS/py_env_2.7.12/bin/activate
-export PYTHONPATH=$PYTHONPATH:/gpfs/work/OGS20_PRACE_P/COPERNICUS/bit.sea
-module load nco
+#module purge
+#module load profile/base
+#module load intel/pe-xe-2018--binary intelmpi/2018--binary
+#module load autoload
+#module load hdf5/1.8.18--intel--pe-xe-2018--binary netcdf/4.6.1--intel--pe-xe-2018--binary
+#module load numpy/1.15.2--python--2.7.12 mpi4py/3.0.0--intelmpi--2018--binary
+#source /gpfs/work/OGS20_PRACE_P/COPERNICUS/py_env_2.7.12/bin/activate
+#export PYTHONPATH=$PYTHONPATH:/gpfs/work/OGS20_PRACE_P/COPERNICUS/bit.sea
+#module load nco
 
 
 MPI="mpirun -np 36 "
 
 
 
-RUNDATE=20200510
+RUNDATE=20220617
   DATESTART=$( date -d "${RUNDATE}  -  7  days " +%Y%m%d )   # <--- IC
   DATE__END=$( date -d "${RUNDATE}  +  3  days " +%Y%m%d-%H:%M:%S )   # all period
 OPA_RUNDATE_A=$( date -d "last tuesday" +%Y%m%d )
@@ -96,6 +96,14 @@ export RIVERMETEODIR=/marconi_scratch/userexternal/vdibiagi/REA_IC_BC/fiumi_sque
 export RIVERMETEODIR=$RUNDIR #fake
 ######################################################
 
+DATE_RIVERSTART=$( date -d "${RUNDATE}  -  10  days " +%Y-%m-%d )
+DATE_RIVER__END=$( date -d "${RUNDATE}  " +%Y-%m-%d )
+URL="https://larissa.ogs.it/erddap/tabledap/Pontelagoscuro_TS.csv?time%2Criver_discharge&time%3E=${DATE_RIVERSTART}T00%3A00%3A00Z&time%3C=${DATE_RIVER__END}T00%3A00%3A00Z"
+
+medmit_prex "curl \"$URL\" > tmp.txt "
+medmit_prex "python riverdata_converter.py -i tmp.txt > Po.txt"
+ 
+exit 0
 
 
 if [ 1 == 1 ] ; then
