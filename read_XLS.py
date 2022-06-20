@@ -74,7 +74,7 @@ class River():
     def read_Discharge_file(self, filename):
         ''' Reads file in the format yyyymmdd-hh:MM:ss Q
         '''
-        DT=[('date','S17'),('Q',np.float32)]
+        DT=[('date','U17'),('Q',np.float32)]
         A =np.loadtxt(filename, dtype=DT)
         return A['date'],A['Q']
     
@@ -224,8 +224,8 @@ def get_RiverPHYS_Data(lato,varname,timelist,Mask):
 
 
 if __name__ == "__main__":
-    timelist=['20060106-00:00:00']
+    timelist=['20220614-12:00:00']
     from general import mask
-    Mask = mask('/marconi_scratch/userexternal/bbejaoui/REA_IC_BC/BC_IC_preparation/mask64.nc')
+    Mask = mask('/g100_work/OGS_prodC/MIT/V1M-dev/V1/devel/wrkdir/BC_IC/mask.nc')
     A=get_RiverPHYS_Data('W','V',timelist,Mask)
 
