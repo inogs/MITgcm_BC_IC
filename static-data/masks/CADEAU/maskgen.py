@@ -75,6 +75,7 @@ ncOUT = NC.netcdf_file(maskfile,"w")
 ncOUT.createDimension("lon",jpi)
 ncOUT.createDimension("lat",jpj)
 ncOUT.createDimension("depth",jpk)
+ncOUT.createDimension("z_a",1)
 
 ncvar    = ncOUT.createVariable("lon", 'f', ("lon",))
 ncvar[:] = Lon
@@ -90,6 +91,24 @@ ncvar[:] = CellBottoms
 ncvar    = ncOUT.createVariable("tmask", 'b', ("depth","lat","lon"))
 ncvar[:] = tmask
 
+ncvar    = ncOUT.createVariable("nav_lev", 'f', ("depth",))
+ncvar[:] = Depth
+ncvar    = ncOUT.createVariable("e3t", 'f', ('z_a',"depth",'lat','lon'))
+ncvar[0,:] = tmask
+
+ncvar    = ncOUT.createVariable("nav_lon", 'f', ("lat", "lon",))
+lon2d=  np.repeat(np.array(Lon,ndmin=2),jpj,axis=0)
+lat2d = np.repeat(np.array(Lat,ndmin=2).T,jpi,axis=1)
+ncvar[:] = lon2d
+
+
+ncvar    = ncOUT.createVariable("nav_lat", 'f', ("lat","lon"))
+ncvar[:] = lat2d
+
+ncvar = ncOUT.createVariable("e1t",'f',('z_a','z_a','lat','lon'))
+ncvar[:]=0
+ncvar = ncOUT.createVariable("e2t",'f',('z_a','z_a','lat','lon'))
+ncvar[:]=0
 
 ncOUT.close()
 
