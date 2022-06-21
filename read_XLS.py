@@ -50,10 +50,29 @@ class River():
         self.nVcells     = int(ROW[6])
         self.nHcells     = int(ROW[7])
         self.Q_mean      = ROW[8]
+        self.applied_ratio=False
         self.Conc = np.zeros((NVAR,),np.float32)
         self.sali = 15.0
         for ivar in range(NVAR):
             self.Conc[ivar]=ROW[9+ivar]
+
+    def get_ratio(self):
+        ''' Return ratio between actual mean discharge and the
+        climatological one read from xls
+        '''
+        ratio = np.nan
+        filename = meteodir + self.name + ".txt"
+        if os.path.exists(filename):
+            _,actual_Q = self.read_Discharge_file(filename)
+            ratio = actual_Q.mean()/self.Q_mean
+        return ratio
+
+    def apply_ratio(self, ratio) :
+        if not self.applied_ratio:
+            self.Q_mean = self.Q_mean*ratio
+            self.applied_ratio = True
+
+
     def getTimeDischarge(self,timelist):
         '''Behaviour climatologic if river is classified as 'yearly clim.'
         or if is not possible to find the file having the same name of the river + '.txt'
@@ -135,6 +154,19 @@ column_list=get_list(f)
 nRivers=int(max(column_list))
  
 
+RATIOS = np.zeros((nRivers), np.float32)
+for iRiver in range(nRivers):
+    irow=4+iRiver
+    f=sh_loc[irow]
+    row_list= get_list(f)
+    R = River(row_list)
+    RATIOS[iRiver] = R.get_ratio()
+
+
+actual_vs_clim_ratio  = np.nanmean(RATIOS)
+if np.isnan(actual_vs_clim_ratio): actual_vs_clim_ratio = 1.0
+print("Applying ratio : ", actual_vs_clim_ratio)
+
 RIVERS=[]
 
 for iRiver in range(nRivers):
@@ -142,6 +174,7 @@ for iRiver in range(nRivers):
     f=sh_loc[irow]
     row_list= get_list(f)
     R = River(row_list)
+    R.apply_ratio(actual_vs_clim_ratio)
     RIVERS.append(R)
     
 #for iRiver in range(nRivers): print RIVERS[iRiver].name
