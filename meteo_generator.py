@@ -60,12 +60,19 @@ def getFilename(INPUTDIR, date17):
     filename if filename exist, None if not.
     Searches for names with hours <=24.
     If file not found it searches for hours > 24, in forecast
+    Second loop searches increments hours by 1, in order to find file at hour=0
+    when previous bulletin file is missing.
     '''
     D= DL.readTimeString(date17)
     hours = D.hour
     for days in range(0,4):
         d = D - DL.relativedelta(days = days)
         hours = D.hour + 24*days
+        filename =  "%sasogs_%s00+00%02d.asc"  %( INPUTDIR, d.strftime("%Y%m%d"), hours)
+        if os.path.exists(filename): return filename
+    for days in range(0,4):
+        d = D - DL.relativedelta(days = days)
+        hours = D.hour + 24*days + 1
         filename =  "%sasogs_%s00+00%02d.asc"  %( INPUTDIR, d.strftime("%Y%m%d"), hours)
         if os.path.exists(filename): return filename
     print("ERROR: file not found: " + filename)
