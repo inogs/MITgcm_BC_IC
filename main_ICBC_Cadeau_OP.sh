@@ -37,7 +37,7 @@ export DATESTART
 
 RUNDIR=/gpfs/scratch/userexternal/gbolzon0/MIT/OP_Cadeau/RUNDATES/${RUNDATE}
 BITSEA=/gpfs/work/OGS20_PRACE_P/COPERNICUS/bit.sea
-mkdir -p $RUNDIR
+#mkdir -p $RUNDIR
 HERE=$PWD
 
 ####### ARCHIVE DIRS #################################
@@ -96,13 +96,28 @@ export RIVERMETEODIR=/marconi_scratch/userexternal/vdibiagi/REA_IC_BC/fiumi_sque
 export RIVERMETEODIR=$RUNDIR #fake
 ######################################################
 
+INPUTDIR=/g100_work/OGS_prodC/MIT/V1M-prod/wrkdir/MODEL/input/binaries/
+INPUTDIR=/g100_work/OGS_prodC/MIT/V1M-dev/V1/devel/wrkdir/MODEL/input/binaries/
+MASKFILE=/g100_work/OGS_prodC/MIT/V1M-prod/wrkdir/BC_IC/mask.nc
+OUTDIR=input_binaries
+mkdir -p ${OUTDIR}
+
+medmit_prex "python get_daily_flux_file.py -i $INPUTDIR -o $OUTDIR -m $MASKFILE -t /g100_work/OGS_prodC/MIT/V1M-prod/wrkdir/daily.txt"
+
+
+exit 0
+
 DATE_RIVERSTART=$( date -d "${RUNDATE}  -  10  days " +%Y-%m-%d )
 DATE_RIVER__END=$( date -d "${RUNDATE}  " +%Y-%m-%d )
 URL="https://larissa.ogs.it/erddap/tabledap/Pontelagoscuro_TS.csv?time%2Criver_discharge&time%3E=${DATE_RIVERSTART}T00%3A00%3A00Z&time%3C=${DATE_RIVER__END}T00%3A00%3A00Z"
 
 medmit_prex "curl \"$URL\" > tmp.txt "
 medmit_prex "python riverdata_converter.py -i tmp.txt > Po.txt"
- 
+
+
+
+
+
 exit 0
 
 
