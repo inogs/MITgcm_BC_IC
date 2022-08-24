@@ -5,9 +5,9 @@ def argument():
     - Kext_CADEAU_365.dat
     - N1p_surface_fluxes_V3.dat
     - N3n_surface_fluxes_V3.dat
-    - N_bottom_fluxes_V4_x2.dat
+    - N_bottom_fluxes_V5_x2.dat
     - O_bottom_fluxes_V3_bis.dat
-    - P_bottom_fluxes_V4_x3.dat
+    - P_bottom_fluxes_V5_x3.dat
 
     generates an equivalent one, based on provided timelist.
     Last frame is replicated
@@ -17,7 +17,7 @@ def argument():
     parser.add_argument(   '--inputdir', '-i',
                                 type = str,
                                 required = True,
-                                help = ''' Dir with original N_bottom_fluxes_V4_x2.dat '''
+                                help = ''' Dir with original N_bottom_fluxes_V5_x2.dat '''
                                 )
     parser.add_argument(   '--outdir', '-o',
                                 type = str,
@@ -63,9 +63,9 @@ jpk,jpj,jpi = TheMask.shape
 filelist=["Kext_CADEAU_365.dat",
           "N1p_surface_fluxes_V3.dat",
           "N3n_surface_fluxes_V3.dat",
-          "N_bottom_fluxes_V4_x2.dat",
+          "N_bottom_fluxes_V5_x2.dat",
           "O_bottom_fluxes_V3_bis.dat",
-          "P_bottom_fluxes_V4_x3.dat"]
+          "P_bottom_fluxes_V5_x3.dat"]
 
 for filename in filelist:
     inputfile=INPUTDIR + filename
