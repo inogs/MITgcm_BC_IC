@@ -78,7 +78,7 @@ def Load_Data(DATADIR, TimeList,before,after,var, datatype):
     elif datatype=='AVE':
         Before_File = "ave." + Before_date17 + ".nc"
         After__File = "ave." + After__date17 + ".nc"    
-    print "loading " + Before_File, After__File, 'for ', var
+    print("loading " + Before_File, After__File, 'for ', var)
     
     ncB = NC.netcdf_file(DATADIR + Before_File,'r')
     ncA = NC.netcdf_file(DATADIR + After__File,'r')
@@ -107,7 +107,7 @@ for var in VARLIST:
     
     for t in OutputTIMELIST:
         outfile = OUTPUTDIR  +  "ave." + t.strftime(dateFormat) +"." + var + ".nc"
-        print outfile
+        print(outfile)
         
         before,after,T_interp = Time_Interpolation(t,Input_TIMELIST)
         if before>BEFORE:
