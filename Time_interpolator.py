@@ -40,7 +40,8 @@ def argument():
 
 args = argument()
 
-from general import *
+from general import addsep, os, file2stringlist, Time_Interpolation, mask
+from commons import netcdf4
 from commons import genUserDateList as DL
 
 INPUT_DIR    = addsep(args.inputdir)
@@ -65,6 +66,19 @@ for line in file2stringlist(args.outputtimefile):
 
 
 def Load_Data(DATADIR, TimeList,before,after,var, datatype):
+    '''
+    Arguments:
+    * DATADIR  * directory with input files
+    * Timelist * list of datetime objects
+    * before   * integer, index of before file in Timelist
+    * after    * integer, index of after file
+    * var      * string
+    * datatype * string, used just to generate the filename
+
+    Returns:
+    * Before_data * numpy ndarray
+    * After__data * idem
+    '''
     Before_date17 = TimeList[before].strftime(dateFormat)
     After__date17 = TimeList[after ].strftime(dateFormat)
     
@@ -80,14 +94,10 @@ def Load_Data(DATADIR, TimeList,before,after,var, datatype):
         After__File = "ave." + After__date17 + ".nc"    
     print("loading " + Before_File, After__File, 'for ', var)
     
-    ncB = NC.netcdf_file(DATADIR + Before_File,'r')
-    ncA = NC.netcdf_file(DATADIR + After__File,'r')
     
-    Before_Data = ncB.variables[var].data[0,:,:,:].copy().astype(np.float32)
-    After__Data = ncA.variables[var].data[0,:,:,:].copy().astype(np.float32)
-    
-    ncA.close()
-    ncB.close()
+    Before_Data = netcdf4.readfile(DATADIR + Before_File, var)
+    After__Data = netcdf4.readfile(DATADIR + After__File, var)
+
     return Before_Data, After__Data
 
 
@@ -117,23 +127,7 @@ for var in VARLIST:
         Actual = (1-T_interp)*Before_DATA + T_interp*After__DATA
         Actual[tmask] = 1.e+20
         
-        NCout = NC.netcdf_file(outfile,'w')
-        NCout.createDimension("lon",Mask.Lon.size)
-        NCout.createDimension("lat",Mask.Lat.size)
-        NCout.createDimension("depth",Mask.jpk)
-        NCout.createDimension("time", 1)
-        ncvar = NCout.createVariable("lon",'f',('lon',))
-        ncvar[:] = Mask.Lon
-        ncvar = NCout.createVariable("lat",'f',('lat',))
-        ncvar[:] = Mask.Lat
-        ncvar = NCout.createVariable("depth",'f',('depth',))
-        ncvar[:] = Mask.Depth
-            
-        ncvar = NCout.createVariable(var,'f',('time','depth','lat','lon'))
-        setattr(ncvar,'missing_value',1.e+20)
-        ncvar[:] = Actual
-        
-        NCout.close()
+        netcdf4.write_3d_file(Actual, var, outfile, mask) # fillValue, compression, thredds, seconds)
      
     
     
