@@ -102,9 +102,9 @@ def writeCheckFile():
     NCout.createDimension("Lon"  ,Mask2.Lon.size)
     NCout.createDimension("Lat"  ,Mask2.Lat.size)
     NCout.createDimension("Depth",Mask2.jpk)
-    if side is "E" or side is "W":    
+    if side in ["E","W"]:
         ncvar = NCout.createVariable(var,'f',('Depth','Lat'))
-    if side is "N" or side is "S":
+    if side in ["N","S"]:
         ncvar = NCout.createVariable(var,'f',('Depth','Lon'))
     setattr(ncvar, 'missing_value', missing_value) 
     ncvar[:] = Mcheck
@@ -133,9 +133,9 @@ for var in MODELVARS[rank::nranks]:
             M = vertical_plane_interpolator(Mask2,Mask1,B,side)
                             
         for iRiver in range(nSideRivers):
-            if side is 'E' or side is 'W':            
+            if side in ['E', 'W']:
                 M[:,Lat_Ind[iRiver]] = Conc[iRiver]
-            if side is "S" or side is "N":
+            if side in [ "S","N"]:
                 M[:,Lon_Ind[iRiver]] = Conc[iRiver]
         writeCheckFile()
 

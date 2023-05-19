@@ -6,7 +6,7 @@ from commons.utils import data_for_linear_interp, Time_Interpolation
 from commons.utils import addsep, file2stringlist
 from commons.interpolators import SeaOverLand
 from scipy import interpolate
-import scipy.io.netcdf as NC
+import scipy.io as NC
 
 
 NetCDF_phys_Vars ={'U':'vozocrtx', 'V':'vomecrty', 'T':'votemper', 'S':'vosaline'}

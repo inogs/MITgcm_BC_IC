@@ -45,7 +45,7 @@ def argument():
 
 from general import mask, space_intepolator_griddata,NetCDF_phys_Files,NetCDF_phys_Vars
 from commons.utils import addsep, file2stringlist
-import scipy.io.netcdf as NC
+import scipy.io as NC
 from commons import netcdf4
 import os
 import numpy as np

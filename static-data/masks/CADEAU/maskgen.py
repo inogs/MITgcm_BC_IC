@@ -18,7 +18,7 @@ def arguments():
 
 args = arguments()
 import numpy as np
-import scipy.io.netcdf as NC
+import scipy.io as NC
 
 bathyfile = args.bathymetry
 maskfile  = args.outputfile
@@ -62,7 +62,7 @@ for ji in range(jpi):
                     break
             LEVELS[jj,ji]=jk+1
 
-tmask = np.zeros((jpk,jpj,jpi), np.bool);
+tmask = np.zeros((jpk,jpj,jpi), bool);
 
 for ji in range(jpi):
     for jj in range(jpj):
