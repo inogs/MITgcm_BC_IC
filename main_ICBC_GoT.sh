@@ -3,20 +3,16 @@
 # FROM NADRI to GOT after NADRI run
 
 
-
-
-module purge
-module load intel/cs-xe-2015--binary intelmpi/5.0.1--binary mkl/11.2.0--binary
-module load autoload matplotlib/1.4.3--python--2.7.9 scipy/0.15.1--python--2.7.9
 MPI=
 
 . ./profile.inc
 
-DATESTART=20141001-12:00:00
+DATESTART=20230930-00:00:00
 DATE__END=20141201-12:00:00
 
-RUNDIR=/pico/scratch/userexternal/gbolzon0/GoT/wrkdir
-NADRIDIR=/pico/scratch/userexternal/gbolzon0/For_MITgcm_TEST
+RUNDIR=/g100_scratch/userexternal/gbolzon0/MIT/GoT/wrkdir
+mkdir -p $RUNDIR
+
 
 #######  DOWNLOADED FILES DIRS  ######################
       RESTARTS_DIR=$RUNDIR/BIO/UNZIPPED/RST             # BIO low freq varibles, listed in $VAR_TO_INTERP
@@ -43,10 +39,12 @@ TIMELIST_TO___FILE=$RUNDIR/tl2.txt
 TIMELIST_HR___FILE=$RUNDIR/tl_hr.txt
 TIMELIST_START=$RUNDIR/t0.txt
 
-MASK_16=$RUNDIR/mask16.nc
-MASK_320=$RUNDIR/mask320.nc
-MASK__F=$RUNDIR/maskINGV.nc
-MASK16_Red=$RUNDIR/mask16R.nc
+
+BATHY=$RUNDIR/bathy
+MASKFILE=$RUNDIR/mask.nc
+MASK_CADEAU=/g100_work/OGS_prodC/MIT/V1M-prod/wrkdir/BC_IC/mask.nc
+MASK_CADEAU_RED=$RUNDIR/mask_CADEAU_reduced.nc
+
 VAR_TO_INTERP=static-data/InterpVarNames
 MODELVARS=static-data/ModelVarNames
 VARLIST_HIGH=$RUNDIR/varlist_high
@@ -57,18 +55,16 @@ export RIVERMETEODIR=$RUNDIR
 
 ### Step 0.  GET MASK INFO  #####################################
 
-medmit_prex_or_die "gzip -cd static-data/masks/V4/mask.nc.gz    > $MASK_16 "
-medmit_prex_or_die "gzip -cd static-data/masks/GoT/mask.nc.gz   > $MASK_320 "
-medmit_prex_or_die "gzip -cd static-data/masks/INGV/mask.nc.gz  > $MASK__F "
+medmit_prex_or_die "gzip -cd static-data/masks/GoT/bathy.gz   > $BATHY"
+medmit_prex_or_die "python static-data/masks/GoT/maskgen.py  -b $BATHY  -o $MASKFILE "
 
-medmit_prex_or_die " python get_cut_Locations.py -c $MASK__F -f $MASK_320 > $RUNDIR/set_cut_indexes_INGV_vs_M320.sh "
-medmit_prex_or_die " python get_cut_Locations.py -c $MASK_16 -f $MASK_320 > $RUNDIR/set_cut_indexes_V4_vs_M320.sh "
 
-medmit_prex_or_die "chmod 744 $RUNDIR/set_cut_indexes_INGV_vs_M320.sh $RUNDIR/set_cut_indexes_V4_vs_M320.sh"
+medmit_prex_or_die " python get_cut_Locations.py -c $MASK_CADEAU -f $MASKFILE > $RUNDIR/set_cut_indexes_CADEAU_vs_local.sh "
+source $RUNDIR/set_cut_indexes_CADEAU_vs_local.sh
 
-# getting Mask16 reduced Gulf of Trieste
-medmit_prex_or_die ". nco_indexer.sh $RUNDIR/set_cut_indexes_V4_vs_M320.sh"
-medmit_prex_or_die " ncks -F -a -d lon,$Index_W,$Index_E -d lat,$Index_S,$Index_N $MASK_16 -O $MASK16_Red"
+medmit_prex_or_die "ncks -F -d lon,$((Index_W+1)),$((Index_E+1)) -d lat,$((Index_S+1)),$((Index_N+1)) -d depth,1,$Index_B $MASK_CADEAU -O $MASK_CADEAU_RED"
+medmit_prex_or_die " python get_cut_Locations.py -c $MASK_CADEAU_RED -f $MASK_CADEAU_RED > $RUNDIR/set_cut_indexes_local_itself.sh "
+
 ##################################################################
 
 
@@ -78,24 +74,21 @@ medmit_prex_or_die " ncks -F -a -d lon,$Index_W,$Index_E -d lat,$Index_S,$Index_
 ### Step 3. INITIAL CONDITIONS ###################################
 
 echo ${DATESTART} > $TIMELIST_START
-DATESTART8=${DATESTART:0:8}
 
+AVE_DIR=/g100_work/OGS_prodC/MIT/V1M-prod/wrkdir/POSTPROC/AVE/
+CUT_IC_DIR=$RUNDIR/IC/CUT
+mkdir -p $CUT_IC_DIR
+VARLIST_HIGH="$RUNDIR/varlist.txt"
+source $RUNDIR/set_cut_indexes_CADEAU_vs_local.sh
+VARLIST_HIGH=static-data/masks/GoT/HF_statevars.txt
+VARLIST_LOW=/g100_work/OGS_prodC/MIT/V1M-prod/etc/static-data/POSTPROC/merging_varlist_daily
+medmit_prex_or_die "python ogstm_cutter.py  --loncut $Index_W,$Index_E --latcut $Index_S,$Index_N -i $AVE_DIR   --datatype ave -o $CUT_IC_DIR -v $VARLIST_HIGH  -t $TIMELIST_START -m $MASK_CADEAU "
+medmit_prex_or_die "python ogstm_cutter.py  --loncut $Index_W,$Index_E --latcut $Index_S,$Index_N -i $AVE_DIR   --datatype ave -o $CUT_IC_DIR -v $VARLIST_LOW   -t $TIMELIST_START -m $MASK_CADEAU "
 
-
-medmit_prex_or_die " . nco_indexer.sh $RUNDIR/set_cut_indexes_INGV_vs_M320.sh "
-medmit_prex_or_die "./cutter.sh -i $START_PHYS -o $PHYSCUT_IC_DIR -c 'ncks -F -a -d x,$Index_W,$Index_E -d y,$Index_S,$Index_N ' "
-medmit_prex_or_die "python IC_files_gen.py -m $MASK_320 --nativemask $MASK16_Red  -i $PHYSCUT_IC_DIR -o $PHYSIC_DIR -t $TIMELIST_START "
-
-
-
-## bio ##
-medmit_prex_or_die " python high_var_list.py > $VARLIST_HIGH "
-medmit_prex_or_die " . $RUNDIR/set_cut_indexes_V4_vs_M320.sh "
-
-medmit_prex_or_die "python ogstm_cutter.py  --loncut $Index_W,$Index_E --latcut $Index_S,$Index_N -i $AVE_DIR          --datatype AVE -o $BIOCUT_IC_DIR -v $VARLIST_HIGH   -t $TIMELIST_START -m $MASK_16 "
-medmit_prex_or_die "python ogstm_cutter.py  --loncut $Index_W,$Index_E --latcut $Index_S,$Index_N -i $TIMEINTERP___DIR --datatype ave -o $BIOCUT_IC_DIR -v $VAR_TO_INTERP  -t $TIMELIST_START -m $MASK_16 "
-
-medmit_prex_or_die "python IC_files_gen.py -m $MASK_320 --nativemask $MASK16_Red -i $BIOCUT_IC_DIR -o $BIO_IC_DIR  -t $TIMELIST_START -v $MODELVARS "
+CUT_IC_DIR=$RUNDIR/IC/CUT
+IC_DIR=$RUNDIR/IC
+medmit_prex_or_die "python IC_files_gen.py -m $MASKFILE --nativemask $MASK_CADEAU_RED -i $CUT_IC_DIR -o $IC_DIR  -t $TIMELIST_START -v $VARLIST_HIGH "
+medmit_prex_or_die "python IC_files_gen.py -m $MASKFILE --nativemask $MASK_CADEAU_RED -i $CUT_IC_DIR -o $IC_DIR  -t $TIMELIST_START -v $VARLIST_LOW "
 
 ##################################################################
 
