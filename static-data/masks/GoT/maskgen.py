@@ -24,7 +24,7 @@ bathyfile = args.bathymetry
 maskfile  = args.outputfile
 
 
-delZ = np.concatenate((np.ones(6,)*0.5, np.ones(29,)*1.0, np.ones(4,)*2.0, np.ones(18,)*3.0  ), axis=0)
+delZ = np.concatenate((np.ones(6,)*0.5, np.ones(29,)*1.0, np.ones(2,)*2.0), axis=0)
 
 
 CellBottoms=np.cumsum(delZ)
