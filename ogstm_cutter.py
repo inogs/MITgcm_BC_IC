@@ -126,7 +126,7 @@ def create_Header(filename):
 
 
 for time in TIMELIST[rank::nranks]:     
-    print(time)
+    print(time,flush=True)
        
        
     for var in MODELVARS:
