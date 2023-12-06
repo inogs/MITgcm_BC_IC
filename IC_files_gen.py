@@ -47,8 +47,10 @@ from general import mask, space_intepolator_griddata,NetCDF_phys_Files,NetCDF_ph
 from commons.utils import addsep, file2stringlist
 import scipy.io as NC
 from commons import netcdf4
+from commons.mask import Mask
 import os
 import numpy as np
+from commons.dataextractor import DataExtractor
 
 try :
     from mpi4py import MPI
@@ -83,6 +85,7 @@ OUTPUTDIR = addsep(args.outputdir)
 os.system("mkdir -p " + OUTPUTDIR)
 os.system("mkdir -p " + OUTPUTDIR + "CHECK")
 TIMELIST   = file2stringlist(args.time)
+Mask_bitsea1 = Mask(args.nativemask)
 Mask1 = mask(args.nativemask)
 Mask2 = mask(args.outmaskfile)
 
@@ -94,8 +97,7 @@ if args.modelvarlist:
         inputfile     = INPUTDIR + "ave." + TIMELIST[0] + "." + var + ".nc"    
         outBinaryFile = OUTPUTDIR + 'IC_' + var + ".dat"
         print("rank %d working on %s" %(rank, outBinaryFile))
-        B=netcdf4.readfile(inputfile, var)[0,:]
-        #B[~Mask1.tmask] = np.NaN
+        B= DataExtractor(Mask_bitsea1,inputfile,var).values
         
         M = space_intepolator_griddata(Mask2,Mask1,B)
         

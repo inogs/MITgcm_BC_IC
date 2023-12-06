@@ -6,8 +6,7 @@ def argument():
     parser = argparse.ArgumentParser(description = '''
     Cuts a single slice or a box in (longitude, latitude) and depth (using Mask levels)
     starting from BIO, ave or RST files.
-    Arguments loncut and latcut define if the cut is a longitudinal or latitudinal slice
-    or is a box. The entire depth is taken in account.
+
     Output file is a cutted ave file.
     At present is parallelized over timelist.
     
@@ -22,14 +21,12 @@ def argument():
                                 type = str,
                                 required=True,
                                 help = '/some/path/')
-    parser.add_argument(   '--loncut',
+    parser.add_argument(   '--side',
                                 type = str,
-                                required=True,
-                                help = '22,25')
-    parser.add_argument(   '--latcut',
-                                type = str,
-                                required=True,
-                                help = '100,102')
+                                required=False,
+                                choices=['N','S','E','W'],
+                                help = 'If not indicated, it cuts a box corresponding to output mask  ')
+
     parser.add_argument(    '--modelvarlist',"-v", 
                                 type = str,
                                 required=True,
@@ -40,15 +37,21 @@ def argument():
                                 help = '''Path name of the file with the time list.
                                 A single time (1 row file) it can be used for IC.
                                 E.g. /some/path/filename''' ) 
-    parser.add_argument(    '--datatype', 
+    parser.add_argument(    '--datatype', '-d',
                                 type = str,
                                 required=True,
                                 choices = ['ave', 'AVE', 'RST'] )
     parser.add_argument(    '--mask',"-m", 
                                 type = str,
                                 required=True,
-                                help = '/some/path/filename' )         
-        
+                                help = 'output mask file' )
+    parser.add_argument(    '--nativemask',"-M",
+                                type = str,
+                                required=True,
+                                help = 'input mask file' )
+
+
+
     return parser.parse_args()
 
 from general import *
@@ -63,40 +66,52 @@ except:
     rank   = 0
     nranks = 1
 
-args = argument()       
+args = argument()
+
 
 INPUTDIR  = addsep(args.inputdir)
 OUTPUTDIR = addsep(args.outputdir)
 datatype = args.datatype
 os.system("mkdir -p " + OUTPUTDIR) 
 
-
 MODELVARS  = file2stringlist(args.modelvarlist)
 TIMELIST   = file2stringlist(args.timelist)
 
-strlst = args.latcut.rsplit(",")
-lat0 = int(strlst[0])
-lat1 = int(strlst[1])+1
-strlst = args.loncut.rsplit(",")
-lon0 = int(strlst[0])
-lon1 = int(strlst[1])+1
+Mask1 = mask(args.nativemask)
+Mask2 = mask(args.mask)
 
-Mask = mask(args.mask)
-Lon = Mask.Lon[lon0:lon1]
-Lat = Mask.Lat[lat0:lat1]
+if args.side is None:
+    cut_type = "Box"
+else:
+    cut_type = 'side'
 
-cut_type = "Box"
-if Lon.size==1: cut_type =  "Longitudinal"
-if Lat.size==1: cut_type =  "Latitudinal"
-print("cut type : " + cut_type)
+def nearest_ind(array,value):
+    DIST = (array-value)**2
+    ind=np.nonzero(DIST==DIST.min())# tuple
+    return int(ind[0][0])
+
+
+cut_lon_0= nearest_ind(Mask1.Lon, Mask2.Lon[0])
+cut_lon_1= nearest_ind(Mask1.Lon, Mask2.Lon[-1])
+cut_lat_0= nearest_ind(Mask1.Lat, Mask2.Lat[0])
+cut_lat_1= nearest_ind(Mask1.Lat, Mask2.Lat[-1])
+cut_depth= nearest_ind(Mask1.Depth, Mask2.Depth[-1])
+
+
+
+
+Lon = Mask1.Lon[cut_lon_0:cut_lon_1+1]
+Lat = Mask1.Lat[cut_lat_0:cut_lat_1+1]
+
+
 
 
 def create_Header(filename):
     NCout = NC.netcdf_file(filename,'w')
-       
+
     NCout.createDimension('lon'  , Lon.size )
     NCout.createDimension('lat'  , Lat.size )
-    NCout.createDimension('depth', Mask.jpk )
+    NCout.createDimension('depth', cut_depth )
 
     ncvar=NCout.createVariable('lon'  ,'f',('lon'  ,))
     ncvar[:]=Lon    
@@ -104,7 +119,7 @@ def create_Header(filename):
     ncvar[:]=Lat
     
     ncvar=NCout.createVariable('depth','f',('depth',))
-    ncvar[:]=Mask.Depth        
+    ncvar[:]=Mask1.Depth[0:cut_depth]
         
     return NCout
 
@@ -132,9 +147,6 @@ for time in TIMELIST[rank::nranks]:
         inputfile = INPUTDIR  +  filename
         
         try:        
-            # NCin = NC.netcdf_file(inputfile,'r')
-            # M = NCin.variables[invar].data.copy().astype(np.float32)
-            # NCin.close()
             D=netCDF4.Dataset(inputfile,'r')
             M = np.array(D[invar])
             D.close()
@@ -142,17 +154,26 @@ for time in TIMELIST[rank::nranks]:
             raise ValueError ("file %s cannot be read" %inputfile ) 
         
         NCc = create_Header(cutfile)
-        if cut_type is "Box": 
+        if cut_type == "Box":
             ncvar=NCc.createVariable(var,'f', ('depth', 'lat','lon'))
-            setattr(ncvar,'missing_value',1.e+20)
-            ncvar[:] = M[0,:Mask.jpk,lat0:lat1,lon0:lon1]
-        if cut_type is "Longitudinal":
+            ncvar[:] = M[:cut_depth,cut_lat_0:cut_lat_1+1,cut_lon_0:cut_lon_1+1]
+
+        if args.side == 'E':
             ncvar=NCc.createVariable(var,'f', ('depth', 'lat'))
-            setattr(ncvar,'missing_value',1.e+20)
-            ncvar[:] = M[0,:Mask.jpk,lat0:lat1,lon0]
-        if cut_type is "Latitudinal":
+            ncvar[:] = M[:cut_depth,cut_lat_0:cut_lat_1+1,cut_lon_1]
+        if args.side == 'W':
+            ncvar=NCc.createVariable(var,'f', ('depth', 'lat'))
+            ncvar[:] = M[:cut_depth,cut_lat_0:cut_lat_1+1,cut_lon_0]
+        if args.side == 'S':
             ncvar=NCc.createVariable(var,'f', ('depth', 'lon'))
-            setattr(ncvar,'missing_value',1.e+20)
-            ncvar[:] = M[0,:Mask.jpk,lat0,lon0:lon1]
+            ncvar[:] = M[:cut_depth,cut_lat_0,cut_lon_0:cut_lon_1+1]
+        if args.side == 'N':
+            ncvar=NCc.createVariable(var,'f', ('depth', 'lon'))
+            ncvar[:] = M[:cut_depth,cut_lat_1,cut_lon_0:cut_lon_1+1]
+
+
+
+        setattr(ncvar,'missing_value',1.e+20)
+
 
         NCc.close()

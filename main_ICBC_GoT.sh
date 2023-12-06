@@ -7,8 +7,8 @@ MPI=
 
 . ./profile.inc
 
-DATESTART=20230930-00:00:00
-DATE__END=20141201-12:00:00
+DATESTART=20231203-00:00:00
+DATE__END=20231207-00:00:00
 
 RUNDIR=/g100_scratch/userexternal/gbolzon0/MIT/GoT/wrkdir
 mkdir -p $RUNDIR
@@ -52,6 +52,7 @@ export RIVERDATA=static-data/masks/GoT/discharges_GoT.xlsx
 export RIVERMETEODIR=$RUNDIR
 ######################################################
 
+if [ 1 == 0 ] ; then
 
 ### Step 0.  GET MASK INFO  #####################################
 
@@ -66,7 +67,7 @@ medmit_prex_or_die "ncks -F -d lon,$((Index_W+1)),$((Index_E+1)) -d lat,$((Index
 medmit_prex_or_die " python get_cut_Locations.py -c $MASK_CADEAU_RED -f $MASK_CADEAU_RED > $RUNDIR/set_cut_indexes_local_itself.sh "
 
 ##################################################################
-
+fi
 
 
 
@@ -75,37 +76,54 @@ medmit_prex_or_die " python get_cut_Locations.py -c $MASK_CADEAU_RED -f $MASK_CA
 
 echo ${DATESTART} > $TIMELIST_START
 
-AVE_DIR=/g100_work/OGS_prodC/MIT/V1M-prod/wrkdir/POSTPROC/AVE/
-CUT_IC_DIR=$RUNDIR/IC/CUT
-mkdir -p $CUT_IC_DIR
-VARLIST_HIGH="$RUNDIR/varlist.txt"
-source $RUNDIR/set_cut_indexes_CADEAU_vs_local.sh
-VARLIST_HIGH=static-data/masks/GoT/HF_statevars.txt
-VARLIST_LOW=/g100_work/OGS_prodC/MIT/V1M-prod/etc/static-data/POSTPROC/merging_varlist_daily
-medmit_prex_or_die "python ogstm_cutter.py  --loncut $Index_W,$Index_E --latcut $Index_S,$Index_N -i $AVE_DIR   --datatype ave -o $CUT_IC_DIR -v $VARLIST_HIGH  -t $TIMELIST_START -m $MASK_CADEAU "
-medmit_prex_or_die "python ogstm_cutter.py  --loncut $Index_W,$Index_E --latcut $Index_S,$Index_N -i $AVE_DIR   --datatype ave -o $CUT_IC_DIR -v $VARLIST_LOW   -t $TIMELIST_START -m $MASK_CADEAU "
 
 CUT_IC_DIR=$RUNDIR/IC/CUT
-IC_DIR=$RUNDIR/IC
-medmit_prex_or_die "python IC_files_gen.py -m $MASKFILE --nativemask $MASK_CADEAU_RED -i $CUT_IC_DIR -o $IC_DIR  -t $TIMELIST_START -v $VARLIST_HIGH "
-medmit_prex_or_die "python IC_files_gen.py -m $MASKFILE --nativemask $MASK_CADEAU_RED -i $CUT_IC_DIR -o $IC_DIR  -t $TIMELIST_START -v $VARLIST_LOW "
+mkdir -p $CUT_IC_DIR
+
+
+VARLIST_HIGH=static-data/masks/GoT/HF_statevars.txt
+VARLIST_LOW=/g100_work/OGS_prodC/MIT/V1M-prod/etc/static-data/POSTPROC/merging_varlist_daily
+
+
+AVE_DIR=/g100_work/OGS_prodC/MIT/V1M-prod/wrkdir/POSTPROC/AVE/
+ALL_VARS=/g100_work/OGS_prodC/MIT/V3/devel/wrkdir/all_vars.txt
+MASK_INPUTS=/g100_work/OGS_prodC/MIT/V1M-prod/wrkdir/BC_IC/mask.nc
+MASK=/g100_work/OGS_prodC/MIT/V3/devel/wrkdir/BC_IC/mask.nc
+
+
+medmit_prex_or_die "python ogstm_cutter.py  -i $AVE_DIR   --datatype ave -o $CUT_IC_DIR -v $ALL_VARS  -t $TIMELIST_START -M $MASK_INPUTS -m $MASK"
+
+MASK_INPUTS_REDUCED=/g100_work/OGS_prodC/MIT/V3/devel/wrkdir/BC_IC/mask_CADEAU_reduced.nc
+IC_DIR=$RUNDIR/IC/
+mkdir -p $IC_DIR
+medmit_prex_or_die "python IC_files_gen.py -m $MASK --nativemask $MASK_INPUTS_REDUCED  -i $CUT_IC_DIR -o $IC_DIR -t $TIMELIST_START -v $ALL_VARS"
+
+
 
 ##################################################################
 
 
+### Step 3. INITIAL CONDITIONS ###################################
 
-exit 0
+TIMES_HF=$RUNDIR/BC/hourly.txt
+TIMES_LF=$RUNDIR/BC/daily.txt
+medmit_prex_or_die "python TimeList_generator.py -s $DATESTART -e $DATE__END --hours 1 > $TIMES_HF "
+medmit_prex_or_die "python TimeList_generator.py -s $DATESTART -e $DATE__END --days  1 > $TIMES_LF "
+SIDE=S
+CUT_BC_DIR=$RUNDIR/BC/
+mkdir -p $CUT_BC_DIR
+
+BC_DIR=$RUNDIR/BC/
+VARLIST_HIGH=/g100_work/OGS_prodC/MIT/V3M-dev/wrkdir/hourly_vars.txt
+medmit_prex_or_die "python ogstm_cutter.py  -i $AVE_DIR --datatype ave --side ${SIDE} -o $CUT_BC_DIR/HF/${SIDE} -v $VARLIST_HIGH -t $TIMES_HF -M $MASK_INPUTS -m $MASK"
+medmit_prex_or_die "python ogstm_cutter.py  -i $AVE_DIR --datatype ave --side ${SIDE} -o $CUT_BC_DIR/LF/${SIDE} -v $VARLIST_LOW  -t $TIMES_LF -M $MASK_INPUTS -m $MASK"
+
+medmit_prex_or_die "python BC_files_gen.py -t $TIMES_HF -m $MASK -v $ALL_VARS  -s S -o $BC_DIR -i  $CUT_BC_DIR/HF/S --nativemask $MASK_INPUTS_REDUCED"
 
 
-getDataFrom_ADRI_Simulation.sh -i $NADRI_RUNDIR -o $OUTDIR
+for I in $CUT_BC_DIR/LF/${SIDE}/* ; do
+   mit_prex_or_die "mit_hourly_linker $I $CUT_BC_DIR/HF/${SIDE}"
+done
 
 
 
-
-python MIT_cutter.py -m $MASK_64 --loncut $Index_E,$Index_W --latcut $Index_S,$Index_N -i $AVE_DIR -o $BIOCUT_DIR -v ModelVarNames -t $TIMELIST_START
-#potrebbe scrivere NetCDF
-
-
-
-
-python BC_files.gen.py -t $TIMELIST_TO___FILE -v ModelVarNames -m $MASK_320 -s S -o $BC_DIR --nativemask $MASK64_Red  -i $BIOCUT_DIR
