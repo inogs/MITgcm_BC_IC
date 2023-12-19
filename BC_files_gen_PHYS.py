@@ -85,9 +85,9 @@ def writeCheckFile():
     NCout.createDimension("Lon"  ,Mask2.Lon.size)
     NCout.createDimension("Lat"  ,Mask2.Lat.size)
     NCout.createDimension("Depth",Mask2.jpk)
-    if side is "E" or side is "W":    
+    if side in [ "E" , "W"]:
         ncvar = NCout.createVariable(var,'f',('Depth','Lat'))
-    if side is "N" or side is "S":
+    if side in [ "N" , "S"]:
         ncvar = NCout.createVariable(var,'f',('Depth','Lon'))
     setattr(ncvar, 'missing_value', missing_value) 
     ncvar[:] = Mcheck
@@ -97,18 +97,18 @@ def writeCheckFile():
 
     
 for var in ["T","S","U","V"]: 
-    if var is "U":
+    if var == "U":
         if side in ["E","W"]: 
             Lon_Ind,Lat_Ind,C = read_XLS.get_RiverPHYS_Data(side, 'V', TIMELIST,Mask2)
             #C = Q/Mask2.CellArea(side);
-            if side is "E" : C = -C
+            if side == "E" : C = -C
         else:
             C[:,:]=0
-    if var is "V":
+    if var == "V":
         if side in ["S","N"]:
             Lon_Ind,Lat_Ind,C = read_XLS.get_RiverPHYS_Data(side, 'V', TIMELIST,Mask2)
             #C = Q/Mask2.CellArea(side);
-            if side is "N" : C = -C
+            if side == "N" : C = -C
         else:
             C[:,:]=0
     if var in ["T","S"]:
@@ -134,9 +134,9 @@ for var in ["T","S","U","V"]:
             M = vertical_plane_interpolator(Mask2,Mask1,B,side)
                             
         for iRiver in range(nSideRivers):
-            if side is 'E' or side is 'W':            
+            if side in [ 'E' , 'W']:
                 M[:,Lat_Ind[iRiver]] = C[iRiver,it]
-            if side is "S" or side is "N":
+            if side in [ "S" , "N"]:
                 M[:,Lon_Ind[iRiver]] = C[iRiver,it]
         #writeCheckFile()            
         F.write(M)

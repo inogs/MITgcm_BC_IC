@@ -46,11 +46,11 @@ class mask():
             if ("tmask" in dset.variables) and (loadtmask):
                 m = dset.variables["tmask"]
                 if len(m.shape) == 4:
-                    self.tmask = np.array(m[0,:,:,:], dtype=np.bool)
+                    self.tmask = np.array(m[0,:,:,:], dtype=bool)
                 elif len(m.shape) == 3:
-                    self.tmask = np.array(m[:,:,:], dtype=np.bool)
+                    self.tmask = np.array(m[:,:,:], dtype=bool)
                 elif len(m.shape) == 2:
-                    self.tmask = np.array(m[:,:], dtype=np.bool)
+                    self.tmask = np.array(m[:,:], dtype=bool)
 
             else:
                 self.tmask = None
