@@ -44,7 +44,8 @@ BFM_NAMES={"no3" : "N3n",
           "po4" : "N1p",
           "nh4" : "N4n",
           "si"  : "N5s",
-          "o2"  : "O2o", 
+          "o2"  : "O2o",
+          "chl" : "P_l",
           "dissic": "O3c",
           "talk"  : "O3h"
 }
@@ -64,7 +65,8 @@ VAR_CONV={"no3" : 1,
           "po4" : 1,
           "nh4" : 1,
           "si"  : 1,
-          "o2"  : 1, 
+          "o2"  : 1,
+          "chl" : 1,
           "dissic": 12000.,
           "talk"  : 1000.
 }
