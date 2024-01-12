@@ -56,6 +56,8 @@ def argument():
 
 from general import *
 import netCDF4
+from commons.dataextractor import DataExtractor
+from commons.mask import Mask
 
 try :
     from mpi4py import MPI
@@ -77,6 +79,8 @@ os.system("mkdir -p " + OUTPUTDIR)
 MODELVARS  = file2stringlist(args.modelvarlist)
 TIMELIST   = file2stringlist(args.timelist)
 
+
+Mask_bitsea1 = Mask(args.nativemask)
 Mask1 = mask(args.nativemask)
 Mask2 = mask(args.mask)
 
@@ -146,10 +150,8 @@ for time in TIMELIST[rank::nranks]:
         
         inputfile = INPUTDIR  +  filename
         
-        try:        
-            D=netCDF4.Dataset(inputfile,'r')
-            M = np.array(D[invar])
-            D.close()
+        try:
+            M = DataExtractor(Mask_bitsea1, inputfile, invar).values
         except:
             raise ValueError ("file %s cannot be read" %inputfile ) 
         
