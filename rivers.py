@@ -201,7 +201,7 @@ def get_RiverBFM_Data(lato, varname, river_list, var_list):
             Lon_Ind[counter] = R.iLon - 1
             Lat_Ind[counter] = R.iLat - 1
 
-            for i in range(var_list):
+            for i in range(len(var_list)):
                 if var_list[i].name == varname:
                     break
             else:
