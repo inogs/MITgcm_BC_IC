@@ -51,7 +51,7 @@ def argument():
 
 args = argument()
 from general import *
-import read_XLS
+import read_river_csv
 from commons import netcdf4
 
 
@@ -99,20 +99,20 @@ def writeCheckFile():
 for var in ["T","S","U","V"]: 
     if var == "U":
         if side in ["E","W"]: 
-            Lon_Ind,Lat_Ind,C = read_XLS.get_RiverPHYS_Data(side, 'V', TIMELIST,Mask2)
+            Lon_Ind,Lat_Ind,C = read_river_csv.get_RiverPHYS_Data(side, 'V', TIMELIST,Mask2)
             #C = Q/Mask2.CellArea(side);
             if side == "E" : C = -C
         else:
             C[:,:]=0
     if var == "V":
         if side in ["S","N"]:
-            Lon_Ind,Lat_Ind,C = read_XLS.get_RiverPHYS_Data(side, 'V', TIMELIST,Mask2)
+            Lon_Ind,Lat_Ind,C = read_river_csv.get_RiverPHYS_Data(side, 'V', TIMELIST,Mask2)
             #C = Q/Mask2.CellArea(side);
             if side == "N" : C = -C
         else:
             C[:,:]=0
     if var in ["T","S"]:
-        Lon_Ind,Lat_Ind,C = read_XLS.get_RiverPHYS_Data(side, var, TIMELIST,Mask2)
+        Lon_Ind,Lat_Ind,C = read_river_csv.get_RiverPHYS_Data(side, var, TIMELIST,Mask2)
        
     outBinaryFile = OUTPUTDIR +'OBC_'+ side + "_" + var + ".dat"
     print(outBinaryFile)
