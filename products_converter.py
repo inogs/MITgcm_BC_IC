@@ -94,7 +94,7 @@ jpk,_,_ = TheMask.shape
 
 
 M = netcdf4.readfile(args.inputfile, prod_var)
-time= netcdf4.readfile(args.inputfile,'time')
+time = (int(t) for t in netcdf4.readfile(args.inputfile, 'time'))
 
 
 for it, t in enumerate(time):
