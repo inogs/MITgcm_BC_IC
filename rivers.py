@@ -1,9 +1,12 @@
+from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Union
 import warnings
 
 import numpy as np
+import pandas as pd
+import csv
 
 from commons import genUserDateList as DL
 
@@ -30,7 +33,8 @@ class River:
         self.side: str = str(data_row[5])
         self.nVcells: int = int(data_row[6])
         self.nHcells: int = int(data_row[7])
-        self.Q_mean: float = data_row[8]
+        self._original_Q_mean: float = float(data_row[8])
+        self.Q_mean: float = float(data_row[8])
         self.applied_ratio: bool = False
         self.sali: float = 15.0
 
@@ -125,13 +129,15 @@ class River:
                 )
                 return self.getClimTimeDischarge(timelist)
 
-    def read_discharge_file(self, filename):
+    @staticmethod
+    def read_discharge_file(filename):
         """ Reads file in the format yyyymmdd-hh:MM:ss Q """
         DT = [('date', 'U17'), ('Q', np.float32)]
         A = np.loadtxt(filename, dtype=DT)
         return A['date'], A['Q']
 
-    def Time_interp(self, Q, timelist_in, timelist_out):
+    @staticmethod
+    def Time_interp(Q, timelist_in, timelist_out):
         n_frames_in = len(timelist_in)
         n_frames_out = len(timelist_out)
         Tin = np.zeros((n_frames_in,), np.float32)
@@ -249,3 +255,35 @@ def get_RiverPHYS_Data(lato, varname, timelist, Mask, river_list):
                 OUT[counter, :] = R.getTimeDischarge(timelist) / denom
             counter = counter + 1
     return Lon_Ind, Lat_Ind, OUT
+
+
+def save_river_csv(river_list, variables, original_qmean=True,
+                   output_path=None):
+    field_associations = OrderedDict([
+        ('N', 'ind'),
+        ('freshwater source', 'name'),
+        ('type of average', 'type_of_ave'),
+        ('x (lon)', 'iLon'),
+        ('y (lat)', 'iLat'),
+        ('side', 'side'),
+        ('vertical cells', 'nVcells'),
+        ('horizontal cells', 'nHcells'),
+        ('discharge', '_original_Q_mean')
+    ])
+
+    if not original_qmean:
+        field_associations['discharge'] = 'Q_mean'
+
+    dataset = {field: [] for field in field_associations}
+    for bgc_var in variables:
+        dataset[bgc_var.name] = []
+
+    for river in river_list:
+        for field_name, field_attr in field_associations.items():
+            dataset[field_name].append(getattr(river, field_attr))
+        for i, bgc_var in enumerate(variables):
+            dataset[bgc_var.name].append(river.Conc[i])
+
+    dataframe = pd.DataFrame(dataset)
+    dataframe.set_index('N', inplace=True)
+    return dataframe.to_csv(output_path, quoting=csv.QUOTE_NONNUMERIC)

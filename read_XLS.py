@@ -96,6 +96,7 @@ def get_RiverBFM_Data(lato, varname):
 
 
 if __name__ == "__main__":
+    # print(rivers.save_river_csv(RIVERS, bgc_vars))
     timelist=['20220614-12:00:00']
     from general import mask
     Mask = mask('/g100_work/OGS_prodC/MIT/V1M-dev/V1/devel/wrkdir/BC_IC/mask.nc')
