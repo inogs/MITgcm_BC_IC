@@ -1,4 +1,6 @@
 import argparse
+from utilities.argparse_types import existing_dir_path, existing_file_path
+
 
 def argument():
     parser = argparse.ArgumentParser(description = '''
@@ -10,98 +12,73 @@ def argument():
 
 
      ''',formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument(   '--inputfile', '-i',
-                                type = str,
+    parser.add_argument(   '--inputdir', '-i',
+                                type = existing_dir_path,
                                 required = True,
                                 help ='The directory wrkdir/MODEL/AVE_FREQ_1/ where chain has run.'
                                 )
     parser.add_argument(   '--outputdir',"-o",
-                                type = str,
+                                type = existing_dir_path,
                                 required = True,
                                 help = 'Path of existing dir')
     parser.add_argument(    '--maskfile', "-m",
-                                type = str,
+                                type = existing_file_path,
                                 required = True,
                                 help = '''Path for the maskfile ''')
-    parser.add_argument(    '--varname', "-v",
+    parser.add_argument(    '--rundate', "-d",
                                 type = str,
                                 required = True,
-                                help = '''Path for the maskfile ''')            
-    
-    
+                                help = '''Rundate in yyyymmdd format ''')
+    parser.add_argument(    '--config', "-c",
+                                type = existing_file_path,
+                                required = True,
+                                help = '''Rundate in yyyymmdd format ''')
+
     return parser.parse_args()
 
 
 args = argument()
 
+import json
 from commons import netcdf4
 from dateutil.relativedelta import relativedelta 
 import datetime
 from commons.mask import Mask
-from commons.utils import addsep
+import xarray as xr
+from dataclasses import dataclass
+import numpy as np
 
-BFM_NAMES={"no3" : "N3n",
-          "po4" : "N1p",
-          "nh4" : "N4n",
-          "si"  : "N5s",
-          "o2"  : "O2o",
-          "chl" : "P_l",
-          "dissic": "O3c",
-          "talk"  : "O3h"
-}
+@dataclass
+class modelvar:
+    bfm_name: str
+    cmems_name:str
+    dataset:str
+    productID:str
+    conversion_value:float=1
 
-PHYS_FILENAMES={"uo": "U",
-            "vo": "V",
-            "so": "S",
-        "thetao": "T"
-        }
-PHYS_VARNAMES={"uo": "vozocrtx",
-            "vo": "vomecrty",
-            "so": "vosaline",
-        "thetao": "votemper"
-        }
+with open(args.config) as f:
+    A=json.load(f)
 
-VAR_CONV={"no3" : 1,
-          "po4" : 1,
-          "nh4" : 1,
-          "si"  : 1,
-          "o2"  : 1,
-          "chl" : 1,
-          "dissic": 12000.,
-          "talk"  : 1000.
-}
+VARIABLES=[modelvar(**raw_var) for raw_var in A["variables"]]
 
-
-prod_var=args.varname
-if prod_var in PHYS_VARNAMES.keys():
-    netcdf_varname = PHYS_VARNAMES[prod_var]
-    file_varname = PHYS_FILENAMES[prod_var]
-    conversion=1.0
-    dateformat="%Y%m%d"
-    fileformat="%s%s_%s.nc"
-    Dref = datetime.datetime(1900,1,1,0,0,0)
-else:
-    netcdf_varname = BFM_NAMES[prod_var]
-    file_varname   = BFM_NAMES[prod_var]
-    conversion = VAR_CONV[prod_var]
-    dateformat="%Y%m%d-%H:%M:%S"
-    fileformat="%save.%s.%s.nc"
-    Dref = datetime.datetime(1970,1,1,0,0,0)
-OUTDIR=addsep(args.outputdir)
-
+dateformat="%Y%m%d-%H:%M:%S"
 TheMask = Mask(args.maskfile)
 jpk,_,_ = TheMask.shape
 
 
-M = netcdf4.readfile(args.inputfile, prod_var)
-time = (int(t) for t in netcdf4.readfile(args.inputfile, 'time'))
 
+for V in VARIABLES:
 
-for it, t in enumerate(time):
-    if prod_var in PHYS_VARNAMES.keys():
-        d = Dref + relativedelta(minutes=t)
-    else:
-        d = Dref + relativedelta(seconds=t)
-    outfile=fileformat %(OUTDIR,d.strftime(dateformat), file_varname)
-    print(outfile)
-    netcdf4.write_3d_file(M[it,:jpk,:,:]*conversion, netcdf_varname, outfile, TheMask, thredds=True)
+    basename = "{}-{}.nc".format(V.dataset,args.rundate)
+
+    inputfile = args.inputdir / basename
+    M = netcdf4.readfile(inputfile, V.cmems_name)
+    time = xr.open_dataset(inputfile).time
+
+    for it, t in enumerate(time.to_numpy()):
+        d=np.datetime64(t,'s').astype(datetime.datetime)
+        datestr=(d + relativedelta(hours=12)).strftime(dateformat)
+        outbasename="ave.{}.{}.nc".format(datestr,V.bfm_name)
+        outfile= args.outputdir / outbasename
+        print(outfile)
+        netcdf4.write_3d_file(M[it,:jpk,:,:]*V.conversion_value, V.bfm_name, outfile, TheMask, thredds=True)
