@@ -123,14 +123,12 @@ for var in ["T","S","U","V"]:
         M = zeroPadding(side,Mask2)
         
         if args.interpdir:
-            filename = INTERPDIR +  t[:8] + "_" + NetCDF_phys_Files[var] + ".nc"
-            if side in ["N","S"]:
-                B = netcdf4.readfile(filename, NetCDF_phys_Vars[var])[0,:Mask1.jpk,0,:]
-                B[~tmask1]=1.e+20
-            if side in ["E","W"]:
-                B = netcdf4.readfile(filename, NetCDF_phys_Vars[var])[0,:Mask1.jpk,:,0]
-                B[~tmask1]=1.e+20
-            B[B>1.e+19] = np.NaN
+            filename = INTERPDIR + "ave." + t + "." + var + ".nc"
+            NCin = NC.netcdf_file(filename,'r')
+            B = NCin.variables[var].data.copy()
+            NCin.close()
+            B[~tmask1] = np.NaN
+
             M = vertical_plane_interpolator(Mask2,Mask1,B,side)
                             
         for iRiver in range(nSideRivers):

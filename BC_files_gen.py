@@ -117,8 +117,11 @@ for var in MODELVARS[rank::nranks]:
        
     outBinaryFile = OUTPUTDIR +'OBC_'+ side + "_" + var + ".dat"
     print(outBinaryFile,flush=True)
-    F = open(outBinaryFile,'wb') 
-    Lon_Ind,Lat_Ind,Conc = read_river_csv.get_RiverBFM_Data(side, var)
+    F = open(outBinaryFile,'wb')
+    if var in ["T","S","U","V"]:
+        Lon_Ind,Lat_Ind,C = read_river_csv.get_RiverPHYS_Data(side, var, TIMELIST,Mask2)
+    else:
+        Lon_Ind,Lat_Ind,Conc = read_river_csv.get_RiverBFM_Data(side, var)
     nSideRivers = Lon_Ind.size
     for t in TIMELIST:
         M = zeroPadding(side,Mask2)
@@ -137,7 +140,7 @@ for var in MODELVARS[rank::nranks]:
                 M[:,Lat_Ind[iRiver]] = Conc[iRiver]
             if side in [ "S","N"]:
                 M[:,Lon_Ind[iRiver]] = Conc[iRiver]
-        writeCheckFile()
+        #writeCheckFile()
 
 
             
