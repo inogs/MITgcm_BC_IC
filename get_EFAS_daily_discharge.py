@@ -10,11 +10,7 @@ def argument():
     parser.add_argument(   '--inputfile','-i',
                                 type = existing_file_path,
                                 required = True,
-                                help = '''downloaded gzip file''')
-    parser.add_argument(   '--type','-t',
-                                type = str,
-                                required = True,
-                                choices = ["historical","forecast"])
+                                help = '''downloaded gzip file from EFAS service''')
     parser.add_argument(   '--tmpdir','-d',
                                 type = existing_dir_path,
                                 required = True,
