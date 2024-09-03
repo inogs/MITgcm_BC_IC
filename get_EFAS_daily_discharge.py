@@ -55,10 +55,11 @@ nriv = len(DF)
 ILON=[int(k) for k in DF['jir'] ]
 JLAT=[int(k) for k in DF['jjr'] ]
 
-def select_points(DSS):
-    x = xr.DataArray(ILON, dims=['location'])
-    y = xr.DataArray(JLAT, dims=['location'])
-    return DSS.isel(longitude=x, latitude=y)
+x = xr.DataArray(ILON, dims=['location'])
+y = xr.DataArray(JLAT, dims=['location'])
+
+def select_points(xr_obj : xr.DataArray):
+    return xr_obj.isel(longitude=x, latitude=y)
 
 # general case, i.e., daily_filename can be replaced by a list of files and it works
 DSS = xr.open_mfdataset(daily_filename, combine='nested',concat_dim=["time"], preprocess=select_points)
