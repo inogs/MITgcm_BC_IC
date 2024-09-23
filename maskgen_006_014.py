@@ -49,7 +49,7 @@ Gphit = np.ones((time,z_a,jpj,jpi),np.double)
 Tmask = np.ones((time,jpk,jpj,jpi),np.double)
 E3t[0,:] = e3t
 E2t[0,0,:] = e2t
-E2t[0,0,:] = e1t
+E1t[0,0,:] = e1t
 
 
 nav_lon,nav_lat = np.meshgrid(lon,lat)
