@@ -25,7 +25,7 @@ def argument():
     return parser.parse_args()
 
 
-def main(bathyfile, coordfile):
+def mask_generator(bathyfile, coordfile, outfile):
     lon     = netcdf4.readfile(bathyfile, 'longitude')
     lat     = netcdf4.readfile(bathyfile, 'latitude')
     nav_lev = netcdf4.readfile(bathyfile, 'depth')
@@ -53,7 +53,7 @@ def main(bathyfile, coordfile):
     Gphit[0,0,:] = nav_lat
     Tmask[0,:] = tmask.astype(np.double)
 
-    ncOUT = netCDF4.Dataset(args.outfile,'w')
+    ncOUT = netCDF4.Dataset(outfile,'w')
     ncOUT.createDimension("x", jpi)
     ncOUT.createDimension("y", jpj)
     ncOUT.createDimension("z", jpk)
@@ -88,4 +88,4 @@ if __name__ == "__main__":
     bathyfile=INPUTDIR+"MED_MFC_006_014_mask_bathy.nc"
     coordfile=INPUTDIR+"MED_MFC_006_014_coordinates.nc"
 
-    main(bathyfile=bathyfile, coordfile=coordfile, outfile=args.outfile)
+    mask_generator(bathyfile=bathyfile, coordfile=coordfile, outfile=args.outfile)
