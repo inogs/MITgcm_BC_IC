@@ -1,5 +1,14 @@
 import argparse
-from utilities.argparse_types import existing_dir_path, existing_file_path
+from bitsea.utilities.argparse_types import existing_dir_path, existing_file_path
+import json
+from bitsea.commons import netcdf4
+from dateutil.relativedelta import relativedelta 
+import datetime
+from bitsea.commons.mask import Mask
+import xarray as xr
+from dataclasses import dataclass
+import numpy as np
+
 
 
 def argument():
@@ -38,15 +47,6 @@ def argument():
 
 
 args = argument()
-
-import json
-from commons import netcdf4
-from dateutil.relativedelta import relativedelta 
-import datetime
-from commons.mask import Mask
-import xarray as xr
-from dataclasses import dataclass
-import numpy as np
 
 @dataclass
 class modelvar:
