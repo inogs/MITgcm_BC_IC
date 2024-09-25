@@ -12,6 +12,15 @@ from bitsea.utilities.argparse_types import existing_file_path
 from dateutil.relativedelta import relativedelta
 
 
+@dataclass
+class ModelVar:
+    bfm_name: str
+    cmems_name: str
+    dataset: str
+    productID: str
+    conversion_value: float = 1
+
+
 def argument():
     parser = argparse.ArgumentParser(
         description="""
@@ -64,45 +73,40 @@ def argument():
     return parser.parse_args()
 
 
-args = argument()
+def main():
+    args = argument()
+
+    with open(args.config) as f:
+        config = json.load(f)
+
+    variables = [ModelVar(**raw_var) for raw_var in config["variables"]]
+
+    dateformat = "%Y%m%d-%H:%M:%S"
+    mask = Mask(args.maskfile)
+    jpk, _, _ = mask.shape
+
+    for V in variables:
+        basename = "{}-{}.nc".format(V.dataset, args.rundate)
+
+        inputfile = args.inputdir / basename
+        M = netcdf4.readfile(inputfile, V.cmems_name)
+        time = xr.open_dataset(inputfile).time
+
+        for it, t in enumerate(time.to_numpy()):
+            d = np.datetime64(t, "s").astype(datetime.datetime)
+            datestr = (d + relativedelta(hours=12)).strftime(dateformat)
+            outbasename = "ave.{}.{}.nc".format(datestr, V.bfm_name)
+            outfile = args.outputdir / outbasename
+            print(outfile)
+            netcdf4.write_3d_file(
+                M[it, :jpk, :, :] * V.conversion_value,
+                V.bfm_name,
+                outfile,
+                mask,
+                thredds=True,
+            )
+    return 0
 
 
-@dataclass
-class modelvar:
-    bfm_name: str
-    cmems_name: str
-    dataset: str
-    productID: str
-    conversion_value: float = 1
-
-
-with open(args.config) as f:
-    A = json.load(f)
-
-VARIABLES = [modelvar(**raw_var) for raw_var in A["variables"]]
-
-dateformat = "%Y%m%d-%H:%M:%S"
-TheMask = Mask(args.maskfile)
-jpk, _, _ = TheMask.shape
-
-
-for V in VARIABLES:
-    basename = "{}-{}.nc".format(V.dataset, args.rundate)
-
-    inputfile = args.inputdir / basename
-    M = netcdf4.readfile(inputfile, V.cmems_name)
-    time = xr.open_dataset(inputfile).time
-
-    for it, t in enumerate(time.to_numpy()):
-        d = np.datetime64(t, "s").astype(datetime.datetime)
-        datestr = (d + relativedelta(hours=12)).strftime(dateformat)
-        outbasename = "ave.{}.{}.nc".format(datestr, V.bfm_name)
-        outfile = args.outputdir / outbasename
-        print(outfile)
-        netcdf4.write_3d_file(
-            M[it, :jpk, :, :] * V.conversion_value,
-            V.bfm_name,
-            outfile,
-            TheMask,
-            thredds=True,
-        )
+if __name__ == "__main__":
+    exit(main())
