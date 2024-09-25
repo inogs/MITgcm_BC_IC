@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "mitgcm.bc_ic"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "mitgcm"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^2.1.1"
+netcdf4 = "^1.7.1.post2"
+scipy = "^1.14.1"
+pandas = "^2.2.3"
+bitsea = {path = "../bit.sea", develop = true}
+
+
+[tool.poetry.group.dev.dependencies]
+deptry = "^0.20.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
