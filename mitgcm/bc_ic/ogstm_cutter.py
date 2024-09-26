@@ -56,8 +56,8 @@ def argument():
 
 from general import *
 import netCDF4
-from commons.dataextractor import DataExtractor
-from commons.mask import Mask
+from bitsea.commons.dataextractor import DataExtractor
+from bitsea.commons.mask import Mask
 
 try :
     from mpi4py import MPI

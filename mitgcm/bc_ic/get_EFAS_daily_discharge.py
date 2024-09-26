@@ -1,5 +1,5 @@
 import argparse
-from utilities.argparse_types import existing_dir_path, existing_file_path, generic_path
+from bitsea.utilities.argparse_types import existing_dir_path, existing_file_path, generic_path
 
 def argument():
     parser = argparse.ArgumentParser(description = '''

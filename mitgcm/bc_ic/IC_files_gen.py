@@ -44,13 +44,13 @@ def argument():
     return parser.parse_args()
 
 from general import mask, space_intepolator_griddata,NetCDF_phys_Files,NetCDF_phys_Vars
-from commons.utils import addsep, file2stringlist
+from bitsea.commons.utils import addsep, file2stringlist
 import scipy.io as NC
-from commons import netcdf4
-from commons.mask import Mask
+from bitsea.commons import netcdf4
+from bitsea.commons.mask import Mask
 import os
 import numpy as np
-from commons.dataextractor import DataExtractor
+from bitsea.commons.dataextractor import DataExtractor
 
 try :
     from mpi4py import MPI

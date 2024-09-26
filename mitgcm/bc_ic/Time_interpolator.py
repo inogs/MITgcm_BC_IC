@@ -41,8 +41,8 @@ def argument():
 args = argument()
 
 from general import addsep, os, file2stringlist, Time_Interpolation, mask
-from commons import netcdf4
-from commons import genUserDateList as DL
+from bitsea.commons import netcdf4
+from bitsea.commons import genUserDateList as DL
 
 INPUT_DIR    = addsep(args.inputdir)
 OUTPUTDIR    = addsep(args.outputdir)

@@ -2,9 +2,9 @@ import numpy as np
 
 import netCDF4
 import os
-from commons.utils import data_for_linear_interp, Time_Interpolation
-from commons.utils import addsep, file2stringlist
-from commons.interpolators import SeaOverLand
+from bitsea.commons.utils import data_for_linear_interp, Time_Interpolation
+from bitsea.commons.utils import addsep, file2stringlist
+from bitsea.commons.interpolators import SeaOverLand
 from scipy import interpolate
 import scipy.io as NC
 

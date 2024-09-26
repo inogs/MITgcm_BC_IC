@@ -52,7 +52,7 @@ def argument():
 args = argument()
 from general import *
 import read_river_csv
-from commons import netcdf4
+from bitsea.commons import netcdf4
 
 
 

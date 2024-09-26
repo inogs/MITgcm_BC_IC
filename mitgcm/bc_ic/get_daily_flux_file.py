@@ -39,9 +39,9 @@ def argument():
 args = argument()
 
 import numpy as np
-from commons.mask import Mask
-from commons.utils import addsep
-from commons.utils import file2stringlist
+from bitsea.commons.mask import Mask
+from bitsea.commons.utils import addsep
+from bitsea.commons.utils import file2stringlist
 from datetime import datetime
 
 def readFrame_from_file(filename,Frame,shape):
