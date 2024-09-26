@@ -73,34 +73,29 @@ def argument():
     return parser.parse_args()
 
 
-def main():
-    args = argument()
-
-    with open(args.config) as f:
-        config = json.load(f)
-
+def main(*, config, maskfile, rundate, inputdir, outputdir):
     variables = [ModelVar(**raw_var) for raw_var in config["variables"]]
 
     dateformat = "%Y%m%d-%H:%M:%S"
-    mask = Mask(args.maskfile)
+    mask = Mask(maskfile)
     jpk, _, _ = mask.shape
 
-    for V in variables:
-        basename = "{}-{}.nc".format(V.dataset, args.rundate)
+    for var in variables:
+        basename = "{}-{}.nc".format(var.dataset, rundate)
 
-        inputfile = args.inputdir / basename
-        M = netcdf4.readfile(inputfile, V.cmems_name)
+        inputfile = inputdir / basename
+        var_data = netcdf4.readfile(inputfile, var.cmems_name)
         time = xr.open_dataset(inputfile).time
 
         for it, t in enumerate(time.to_numpy()):
             d = np.datetime64(t, "s").astype(datetime.datetime)
             datestr = (d + relativedelta(hours=12)).strftime(dateformat)
-            outbasename = "ave.{}.{}.nc".format(datestr, V.bfm_name)
+            outbasename = "ave.{}.{}.nc".format(datestr, var.bfm_name)
             outfile = args.outputdir / outbasename
             print(outfile)
             netcdf4.write_3d_file(
-                M[it, :jpk, :, :] * V.conversion_value,
-                V.bfm_name,
+                var_data[it, :jpk, :, :] * var.conversion_value,
+                var.bfm_name,
                 outfile,
                 mask,
                 thredds=True,
@@ -109,4 +104,15 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    args = argument()
+    with open(args.config) as f:
+        config = json.load(f)
+    exit(
+        main(
+            cnofig=config,
+            maskfile=args.maskfile,
+            rundate=args.rundate,
+            inputdir=args.inputdir,
+            outputdir=args.outputdir,
+        )
+    )
