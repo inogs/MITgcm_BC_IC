@@ -91,7 +91,7 @@ def main(*, config, maskfile, rundate, inputdir, outputdir):
             d = np.datetime64(t, "s").astype(datetime.datetime)
             datestr = (d + relativedelta(hours=12)).strftime(dateformat)
             outbasename = "ave.{}.{}.nc".format(datestr, var.bfm_name)
-            outfile = args.outputdir / outbasename
+            outfile = outputdir / outbasename
             print(outfile)
             netcdf4.write_3d_file(
                 var_data[it, :jpk, :, :] * var.conversion_value,

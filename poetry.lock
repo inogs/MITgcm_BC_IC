@@ -7,15 +7,17 @@ description = ""
 optional = false
 python-versions = "^3.10"
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 numpy = "^2.1.1"
 scipy = "^1.14.1"
 
 [package.source]
-type = "directory"
-url = "../bit.sea"
+type = "git"
+url = "https://github.com/exactlab/bit.sea.git"
+reference = "vendored"
+resolved_reference = "c42ce6e152f950afa20072b155c5de8e1afcd3a5"
 
 [[package]]
 name = "certifi"
@@ -594,13 +596,13 @@ files = [
 
 [[package]]
 name = "virtualenv"
-version = "20.26.5"
+version = "20.26.6"
 description = "Virtual Python Environment builder"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "virtualenv-20.26.5-py3-none-any.whl", hash = "sha256:4f3ac17b81fba3ce3bd6f4ead2749a72da5929c01774948e243db9ba41df4ff6"},
-    {file = "virtualenv-20.26.5.tar.gz", hash = "sha256:ce489cac131aa58f4b25e321d6d186171f78e6cb13fafbf32a840cee67733ff4"},
+    {file = "virtualenv-20.26.6-py3-none-any.whl", hash = "sha256:7345cc5b25405607a624d8418154577459c3e0277f5466dd79c49d5e492995f2"},
+    {file = "virtualenv-20.26.6.tar.gz", hash = "sha256:280aede09a2a5c317e409a00102e7077c6432c5a38f0ef938e643805a7ad2c48"},
 ]
 
 [package.dependencies]
@@ -639,4 +641,4 @@ viz = ["matplotlib", "nc-time-axis", "seaborn"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9281c726914e81f2c5d59256af7af5fec1c7584bce62373547f28cbd1934a289"
+content-hash = "ee118c07f6189b4baa346a5cd1fc416c107b67f6f1617195fb3e382705933b74"
