@@ -40,7 +40,11 @@ def argument():
 
 args = argument()
 
-from general import addsep, os, file2stringlist, Time_Interpolation, mask
+#from general import mask
+from bitsea.commons.mask import Mask
+from bitsea.commons.utils import addsep,file2stringlist
+from bitsea.commons.utils import Time_Interpolation
+import os
 from bitsea.commons import netcdf4
 from bitsea.commons import genUserDateList as DL
 
@@ -91,7 +95,7 @@ def Load_Data(DATADIR, TimeList,before,after,var, datatype):
         After__File = "ave." + After__date17 + "." + var + ".nc"
     elif datatype=='AVE':
         Before_File = "ave." + Before_date17 + ".nc"
-        After__File = "ave." + After__date17 + ".nc"    
+        After__File = "ave." + After__date17 + ".nc"
     print("loading " + Before_File, After__File, 'for ', var)
     
     
@@ -104,7 +108,7 @@ def Load_Data(DATADIR, TimeList,before,after,var, datatype):
 
 
 
-Mask = mask(args.maskfile)
+Mask_obj = Mask(args.maskfile)
 
 
 BEFORE, AFTER,T_interp = Time_Interpolation(OutputTIMELIST[0],Input_TIMELIST)
@@ -127,7 +131,7 @@ for var in VARLIST:
         Actual = (1-T_interp)*Before_DATA + T_interp*After__DATA
         Actual[tmask] = 1.e+20
         
-        netcdf4.write_3d_file(Actual, var, outfile, mask) # fillValue, compression, thredds, seconds)
+        netcdf4.write_3d_file(Actual, var, outfile, Mask_obj) # fillValue, compression, thredds, seconds)
      
     
     
