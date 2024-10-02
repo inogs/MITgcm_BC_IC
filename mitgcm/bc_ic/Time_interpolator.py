@@ -48,6 +48,12 @@ import os
 from bitsea.commons import netcdf4
 from bitsea.commons import genUserDateList as DL
 
+import mpi4py
+from bitsea.utilities.mpi_serial_interface import get_mpi_communicator
+comm = get_mpi_communicator()
+rank  = comm.Get_rank()
+nranks =comm.size
+
 INPUT_DIR    = addsep(args.inputdir)
 OUTPUTDIR    = addsep(args.outputdir)
 
@@ -113,7 +119,7 @@ Mask_obj = Mask(args.maskfile)
 
 BEFORE, AFTER,T_interp = Time_Interpolation(OutputTIMELIST[0],Input_TIMELIST)
 VARLIST=file2stringlist(args.varlist)
-for var in VARLIST:
+for var in VARLIST[rank::nranks]:
     Before_DATA, After__DATA = Load_Data(INPUT_DIR, Input_TIMELIST, BEFORE, AFTER,var,inputtype)
     tmask=Before_DATA > 1.e+19;
     
