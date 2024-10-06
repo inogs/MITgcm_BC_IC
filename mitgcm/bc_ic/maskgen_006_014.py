@@ -34,7 +34,6 @@ def mask_generator(bathyfile, coordfile, outfile):
     e2t=netcdf4.readfile(coordfile, 'e2t')
     e3t=netcdf4.readfile(coordfile, 'e3t')
 
-
     jpk, jpj, jpi = e3t.shape
     time, z_a = 1,1
     E3t = np.ones((time,jpk,jpj,jpi),np.double)
