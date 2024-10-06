@@ -1,4 +1,4 @@
-from commons.utils import file2stringlist
+from bitsea.commons.utils import file2stringlist
 
 MODEL_VARS  = file2stringlist("static-data/ModelVarNames")
 INTERP_VARS = file2stringlist("static-data/InterpVarNames")

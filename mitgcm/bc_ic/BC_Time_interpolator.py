@@ -43,7 +43,7 @@ def argument():
     return parser.parse_args()
 
 from general import *
-from commons import genUserDateList as DL
+from bitsea.commons import genUserDateList as DL
 
 try :
     from mpi4py import MPI
