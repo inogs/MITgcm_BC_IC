@@ -76,6 +76,7 @@ def gen_ic_files(*,
                  time,
                  outmaskfile,
                  modelvarlist):
+
     rank = 0
     nranks = 1
 
