@@ -80,9 +80,6 @@ def writeCheckFile(*, M, outputdir, var, Mask1, Mask2):
 def gen_ic_files(
     *, inputdir, outputdir, nativemask, time, outmaskfile, modelvarlist
 ):
-    rank = 0
-    nranks = 1
-
     INPUTDIR = addsep(inputdir)
     OUTPUTDIR = addsep(outputdir)
     os.system("mkdir -p " + OUTPUTDIR)
@@ -95,10 +92,9 @@ def gen_ic_files(
     if modelvarlist:
         MODELVARS = modelvarlist
 
-        for var in MODELVARS[rank::nranks]:
+        for var in MODELVARS:
             inputfile = INPUTDIR + "ave." + TIMELIST[0] + "." + var + ".nc"
             outBinaryFile = OUTPUTDIR + "IC_" + var + ".dat"
-            print("rank %d working on %s" % (rank, outBinaryFile), flush=True)
             B = DataExtractor(Mask_bitsea1, inputfile, var).values
 
             M = space_intepolator_griddata(Mask2, Mask1, B)
@@ -113,7 +109,7 @@ def gen_ic_files(
 
     else:
         MODELVARS = ["U", "V", "T", "S"]
-        for var in MODELVARS[rank::nranks]:
+        for var in MODELVARS:
             inputfile = (
                 INPUTDIR
                 + TIMELIST[0][:8]
@@ -122,7 +118,6 @@ def gen_ic_files(
                 + ".nc"
             )
             outBinaryFile = OUTPUTDIR + "IC_" + var + ".dat"
-            print("rank %d working on %s" % (rank, outBinaryFile), flush=True)
 
             B = netcdf4.readfile(inputfile, NetCDF_phys_Vars[var])[
                 0, : Mask1.jpk, :, :
