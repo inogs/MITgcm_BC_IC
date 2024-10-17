@@ -11,7 +11,6 @@ from .general import mask
 from .general import side_tmask
 from .general import vertical_plane_interpolator
 from .general import zeroPadding
-# from general import *
 
 
 def argument():
@@ -82,29 +81,10 @@ def argument():
     return parser.parse_args()
 
 
-args = argument()
-
-
-side = args.side
-Mask2 = mask(args.outmaskfile)
-tmask2 = side_tmask(side, Mask2)
-if args.interpdir:
-    INTERPDIR = addsep(args.interpdir)
-    Mask1 = mask(args.nativemask)
-    tmask1 = side_tmask(side, Mask1)
-
-
-OUTPUTDIR = addsep(args.outputdir)
-MODELVARS = file2stringlist(args.modelvarlist)
-TIMELIST = file2stringlist(args.timelist)
-os.system("mkdir -p " + OUTPUTDIR)
-os.system("mkdir -p " + OUTPUTDIR + "CHECK")
-
-
-def writeCheckFile():
+def writeCheckFile(*, var, t, side, OUTPUTDIR, M, interpdir, tmask2, Mask2):
     checkfile = OUTPUTDIR + "CHECK/OBC_" + side + "." + t + "." + var + ".nc"
     Mcheck = M.copy()
-    if args.interpdir:
+    if interpdir:
         missing_value = 1.0e20
         Mcheck[~tmask2] = missing_value
     else:
@@ -123,38 +103,75 @@ def writeCheckFile():
     NCout.close()
 
 
-for var in MODELVARS:
-    outBinaryFile = OUTPUTDIR + "OBC_" + side + "_" + var + ".dat"
-    print(outBinaryFile, flush=True)
-    F = open(outBinaryFile, "wb")
-    if var in ["T", "S", "U", "V"]:
-        Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
-            side, var, TIMELIST, Mask2
-        )
-    else:
-        Lon_Ind, Lat_Ind, Conc = read_river_csv.get_RiverBFM_Data(side, var)
-    nSideRivers = Lon_Ind.size
-    for t in TIMELIST:
-        M = zeroPadding(side, Mask2)
+def main(
+    *,
+    side,
+    outmaskfile,
+    interpdir,
+    nativemask,
+    outputdir,
+    modelvarlist,
+    timelist,
+):
+    Mask2 = mask(outmaskfile)
+    tmask2 = side_tmask(side, Mask2)
+    if interpdir:
+        INTERPDIR = addsep(interpdir)
+        Mask1 = mask(nativemask)
+        tmask1 = side_tmask(side, Mask1)
 
-        if args.interpdir:
-            filename = INTERPDIR + "ave." + t + "." + var + ".nc"
-            NCin = NC.netcdf_file(filename, "r")
-            B = NCin.variables[var].data.copy()
-            NCin.close()
+    OUTPUTDIR = addsep(outputdir)
+    MODELVARS = file2stringlist(modelvarlist)
+    TIMELIST = file2stringlist(timelist)
+    os.system("mkdir -p " + OUTPUTDIR)
+    os.system("mkdir -p " + OUTPUTDIR + "CHECK")
 
-            B[~tmask1] = np.NaN
-            M = vertical_plane_interpolator(Mask2, Mask1, B, side)
+    for var in MODELVARS:
+        outBinaryFile = OUTPUTDIR + "OBC_" + side + "_" + var + ".dat"
+        print(outBinaryFile, flush=True)
+        F = open(outBinaryFile, "wb")
+        if var in ["T", "S", "U", "V"]:
+            Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
+                side, var, TIMELIST, Mask2
+            )
+        else:
+            Lon_Ind, Lat_Ind, Conc = read_river_csv.get_RiverBFM_Data(side, var)
+        nSideRivers = Lon_Ind.size
+        for t in TIMELIST:
+            M = zeroPadding(side, Mask2)
 
-        for iRiver in range(nSideRivers):
-            if side in ["E", "W"]:
-                M[:, Lat_Ind[iRiver]] = Conc[iRiver]
-            if side in ["S", "N"]:
-                M[:, Lon_Ind[iRiver]] = Conc[iRiver]
-        # writeCheckFile()
+            if interpdir:
+                filename = INTERPDIR + "ave." + t + "." + var + ".nc"
+                NCin = NC.netcdf_file(filename, "r")
+                B = NCin.variables[var].data.copy()
+                NCin.close()
 
+                B[~tmask1] = np.NaN
+                M = vertical_plane_interpolator(Mask2, Mask1, B, side)
+
+            for iRiver in range(nSideRivers):
+                if side in ["E", "W"]:
+                    M[:, Lat_Ind[iRiver]] = Conc[iRiver]
+                if side in ["S", "N"]:
+                    M[:, Lon_Ind[iRiver]] = Conc[iRiver]
+            # writeCheckFile()
+
+            F.write(M)
         F.write(M)
-    F.write(M)
-    F.write(M)
-    F.write(M)
-    F.close()
+        F.write(M)
+        F.write(M)
+        F.close()
+    return 0
+
+
+if __name__ == "__main__":
+    args = argument()
+    exit(
+        main(
+            side=args.side,
+            outmaskfile=args.outmaskfile,
+            interpdir=args.interpdir,
+            nativemask=args.nativemask,
+            outputdir=args.outputdir,
+        )
+    )
