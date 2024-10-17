@@ -115,7 +115,7 @@ def main(
     datatype = datatype
     os.system("mkdir -p " + OUTPUTDIR)
 
-    MODELVARS = file2stringlist(modelvarlist)
+    MODELVARS = modelvarlist
     TIMELIST = file2stringlist(timelist)
 
     Mask_bitsea1 = Mask(nativemask)
@@ -196,6 +196,7 @@ def main(
 
 if __name__ == "__main__":
     args = argument()
+    modelvarlist = file2stringlist(args.modelvarlist)
     exit(
         main(
             inputdir=args.inputdir,
