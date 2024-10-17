@@ -173,5 +173,7 @@ if __name__ == "__main__":
             interpdir=args.interpdir,
             nativemask=args.nativemask,
             outputdir=args.outputdir,
+            modelvarlist=args.modelvarlist,
+            timelist=args.timelist,
         )
     )

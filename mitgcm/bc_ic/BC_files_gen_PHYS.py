@@ -67,23 +67,6 @@ def argument():
     return parser.parse_args()
 
 
-args = argument()
-
-side = args.side
-Mask2 = mask(args.outmaskfile)
-tmask2 = side_tmask(side, Mask2)
-if args.interpdir:
-    INTERPDIR = addsep(args.interpdir)
-    Mask1 = mask(args.nativemask)
-    tmask1 = side_tmask(side, Mask1)
-
-
-OUTPUTDIR = addsep(args.outputdir)
-TIMELIST = file2stringlist(args.timelist)
-os.system("mkdir -p " + OUTPUTDIR)
-os.system("mkdir -p " + OUTPUTDIR + "CHECK")
-
-
 def writeCheckFile():
     checkfile = OUTPUTDIR + "CHECK/OBC_" + side + "." + t + "." + var + ".nc"
     Mcheck = M.copy()
@@ -106,57 +89,93 @@ def writeCheckFile():
     NCout.close()
 
 
-for var in ["T", "S", "U", "V"]:
-    if var == "U":
-        if side in ["E", "W"]:
-            Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
-                side, "V", TIMELIST, Mask2
-            )
-            # C = Q/Mask2.CellArea(side);
-            if side == "E":
-                C = -C
-        else:
-            C[:, :] = 0
-    if var == "V":
-        if side in ["S", "N"]:
-            Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
-                side, "V", TIMELIST, Mask2
-            )
-            # C = Q/Mask2.CellArea(side);
-            if side == "N":
-                C = -C
-        else:
-            C[:, :] = 0
-    if var in ["T", "S"]:
-        Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
-            side, var, TIMELIST, Mask2
-        )
+def main(
+    *,
+    side,
+    outmaskfile,
+    interpdir,
+    nativemask,
+    outputdir,
+    timelist,
+):
+    Mask2 = mask(outmaskfile)
+    tmask2 = side_tmask(side, Mask2)
+    if interpdir:
+        INTERPDIR = addsep(interpdir)
+        Mask1 = mask(nativemask)
+        tmask1 = side_tmask(side, Mask1)
 
-    outBinaryFile = OUTPUTDIR + "OBC_" + side + "_" + var + ".dat"
-    print(outBinaryFile)
-    F = open(outBinaryFile, "wb")
+    OUTPUTDIR = addsep(outputdir)
+    TIMELIST = file2stringlist(timelist)
+    os.system("mkdir -p " + OUTPUTDIR)
+    os.system("mkdir -p " + OUTPUTDIR + "CHECK")
 
-    nSideRivers = Lon_Ind.size
-    for it, t in enumerate(TIMELIST):
-        M = zeroPadding(side, Mask2)
-
-        if args.interpdir:
-            filename = INTERPDIR + "ave." + t + "." + var + ".nc"
-            NCin = NC.netcdf_file(filename, "r")
-            B = NCin.variables[var].data.copy()
-            NCin.close()
-            B[~tmask1] = np.NaN
-
-            M = vertical_plane_interpolator(Mask2, Mask1, B, side)
-
-        for iRiver in range(nSideRivers):
+    for var in ["T", "S", "U", "V"]:
+        if var == "U":
             if side in ["E", "W"]:
-                M[:, Lat_Ind[iRiver]] = C[iRiver, it]
+                Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
+                    side, "V", TIMELIST, Mask2
+                )
+                # C = Q/Mask2.CellArea(side);
+                if side == "E":
+                    C = -C
+            else:
+                C[:, :] = 0
+        if var == "V":
             if side in ["S", "N"]:
-                M[:, Lon_Ind[iRiver]] = C[iRiver, it]
-        # writeCheckFile()
+                Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
+                    side, "V", TIMELIST, Mask2
+                )
+                # C = Q/Mask2.CellArea(side);
+                if side == "N":
+                    C = -C
+            else:
+                C[:, :] = 0
+        if var in ["T", "S"]:
+            Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
+                side, var, TIMELIST, Mask2
+            )
+
+        outBinaryFile = OUTPUTDIR + "OBC_" + side + "_" + var + ".dat"
+        print(outBinaryFile)
+        F = open(outBinaryFile, "wb")
+
+        nSideRivers = Lon_Ind.size
+        for it, t in enumerate(TIMELIST):
+            M = zeroPadding(side, Mask2)
+
+            if interpdir:
+                filename = INTERPDIR + "ave." + t + "." + var + ".nc"
+                NCin = NC.netcdf_file(filename, "r")
+                B = NCin.variables[var].data.copy()
+                NCin.close()
+                B[~tmask1] = np.NaN
+
+                M = vertical_plane_interpolator(Mask2, Mask1, B, side)
+
+            for iRiver in range(nSideRivers):
+                if side in ["E", "W"]:
+                    M[:, Lat_Ind[iRiver]] = C[iRiver, it]
+                if side in ["S", "N"]:
+                    M[:, Lon_Ind[iRiver]] = C[iRiver, it]
+            # writeCheckFile()
+            F.write(M)
         F.write(M)
-    F.write(M)
-    F.write(M)
-    F.write(M)
-    F.close()
+        F.write(M)
+        F.write(M)
+        F.close()
+    return 0
+
+
+if __name__ == "__main__":
+    args = argument()
+    exit(
+        main(
+            side=args.side,
+            outmaskfile=args.outmaskfile,
+            interpdir=args.interpdir,
+            nativemask=args.nativemask,
+            outputdir=args.outputdir,
+            timelist=args.timelist,
+        )
+    )
