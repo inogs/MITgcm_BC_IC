@@ -146,7 +146,7 @@ def main(
             M = zeroPadding(side, Mask2)
 
             if interpdir:
-                filename = INTERPDIR / "ave." + t + "." + var + ".nc"
+                filename = INTERPDIR / ("ave." + t + "." + var + ".nc")
                 B = netcdf4.readfile(filename, var)
                 B[~tmask1] = np.NaN
 
