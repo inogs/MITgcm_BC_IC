@@ -106,8 +106,10 @@ def main(
 
     OUTPUTDIR = Path(outputdir)
     TIMELIST = file2stringlist(timelist)
-    os.system("mkdir -p " + OUTPUTDIR)
-    os.system("mkdir -p " + OUTPUTDIR + "CHECK")
+    OUTPUTDIR.mkdir(parents=True, exist_ok=True)
+    CHECK=OUTPUTDIR / "CHECK"
+    CHECK.mkdir(parents=True, exist_ok=True)
+
 
     for var in ["T", "S", "U", "V"]:
         if var == "U":
@@ -135,7 +137,7 @@ def main(
                 side, var, TIMELIST, Mask2
             )
 
-        outBinaryFile = OUTPUTDIR / "OBC_" + side + "_" + var + ".dat"
+        outBinaryFile = OUTPUTDIR / ("OBC_" + side + "_" + var + ".dat")
         print(outBinaryFile)
         F = open(outBinaryFile, "wb")
 
