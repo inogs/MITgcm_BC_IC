@@ -84,7 +84,7 @@ def mask_generator(bathyfile, coordfile, outfile):
 if __name__ == "__main__":
     args = argument()
     INPUTDIR=Path(args.inputdir)
-    bathyfile=INPUTDIR+"MED_MFC_006_014_mask_bathy.nc"
-    coordfile=INPUTDIR+"MED_MFC_006_014_coordinates.nc"
+    bathyfile=INPUTDIR / "MED_MFC_006_014_mask_bathy.nc"
+    coordfile=INPUTDIR / "MED_MFC_006_014_coordinates.nc"
 
     mask_generator(bathyfile=bathyfile, coordfile=coordfile, outfile=args.outfile)

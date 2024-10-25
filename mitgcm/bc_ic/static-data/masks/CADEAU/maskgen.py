@@ -182,4 +182,4 @@ def main(*, bathyfile, maskfile):
 
 if __name__ == "__main__":
     args = arguments()
-    main(bathyfile=args.bathyfile, maskfile=args.outputfile)
+    main(bathyfile=args.bathymetry, maskfile=args.outputfile)
