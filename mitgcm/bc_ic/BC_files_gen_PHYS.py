@@ -1,17 +1,4 @@
 import argparse
-import os
-
-import numpy as np
-import read_river_csv
-import scipy.io as NC
-
-from .general import addsep
-from .general import file2stringlist
-from .general import mask
-from .general import side_tmask
-from .general import vertical_plane_interpolator
-from .general import zeroPadding
-
 
 def argument():
     parser = argparse.ArgumentParser(
@@ -67,26 +54,38 @@ def argument():
     return parser.parse_args()
 
 
-def writeCheckFile():
-    checkfile = OUTPUTDIR + "CHECK/OBC_" + side + "." + t + "." + var + ".nc"
-    Mcheck = M.copy()
-    if args.interpdir:
-        missing_value = 1.0e20
-        # Mcheck[~tmask2]=missing_value
-    else:
-        missing_value = 0
+from pathlib import Path
+from general import mask, side_tmask, zeroPadding, vertical_plane_interpolator
+import read_river_csv
+from bitsea.commons import netcdf4
+from bitsea.commons.utils import file2stringlist
+import os
+import numpy as np
+import netCDF4 as NC
 
-    NCout = NC.netcdf_file(checkfile, "w")
-    NCout.createDimension("Lon", Mask2.Lon.size)
-    NCout.createDimension("Lat", Mask2.Lat.size)
-    NCout.createDimension("Depth", Mask2.jpk)
-    if side in ["E", "W"]:
-        ncvar = NCout.createVariable(var, "f", ("Depth", "Lat"))
-    if side in ["N", "S"]:
-        ncvar = NCout.createVariable(var, "f", ("Depth", "Lon"))
-    setattr(ncvar, "missing_value", missing_value)
+
+def writeCheckFile(OUTPUTDIR, M, Mask2, side,t,var, interpdir):
+    checkfile = OUTPUTDIR /  "CHECK/OBC_"  + side + "." + t + "." + var + ".nc"
+    Mcheck = M.copy()
+    if interpdir is not None:
+        missing_value=1.e+20
+        #Mcheck[~tmask2]=missing_value
+    else:
+        missing_value=0
+
+    NCout =NC.Dataset(checkfile,"w")
+    NCout.createDimension("Lon"  ,Mask2.Lon.size)
+    NCout.createDimension("Lat"  ,Mask2.Lat.size)
+    NCout.createDimension("Depth",Mask2.jpk)
+    if side in [ "E" , "W"]:
+        ncvar = NCout.createVariable(var,'f',('Depth','Lat'))
+    if side in [ "N" , "S"]:
+        ncvar = NCout.createVariable(var,'f',('Depth','Lon'))
+    setattr(ncvar, 'missing_value', missing_value) 
     ncvar[:] = Mcheck
     NCout.close()
+
+
 
 
 def main(
@@ -99,13 +98,13 @@ def main(
     timelist,
 ):
     Mask2 = mask(outmaskfile)
-    tmask2 = side_tmask(side, Mask2)
-    if interpdir:
-        INTERPDIR = addsep(interpdir)
+
+    if interpdir is not None:
+        INTERPDIR = Path(interpdir)
         Mask1 = mask(nativemask)
         tmask1 = side_tmask(side, Mask1)
 
-    OUTPUTDIR = addsep(outputdir)
+    OUTPUTDIR = Path(outputdir)
     TIMELIST = file2stringlist(timelist)
     os.system("mkdir -p " + OUTPUTDIR)
     os.system("mkdir -p " + OUTPUTDIR + "CHECK")
@@ -116,7 +115,7 @@ def main(
                 Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
                     side, "V", TIMELIST, Mask2
                 )
-                # C = Q/Mask2.CellArea(side);
+
                 if side == "E":
                     C = -C
             else:
@@ -126,7 +125,7 @@ def main(
                 Lon_Ind, Lat_Ind, C = read_river_csv.get_RiverPHYS_Data(
                     side, "V", TIMELIST, Mask2
                 )
-                # C = Q/Mask2.CellArea(side);
+
                 if side == "N":
                     C = -C
             else:
@@ -136,7 +135,7 @@ def main(
                 side, var, TIMELIST, Mask2
             )
 
-        outBinaryFile = OUTPUTDIR + "OBC_" + side + "_" + var + ".dat"
+        outBinaryFile = OUTPUTDIR / "OBC_" + side + "_" + var + ".dat"
         print(outBinaryFile)
         F = open(outBinaryFile, "wb")
 
@@ -145,10 +144,8 @@ def main(
             M = zeroPadding(side, Mask2)
 
             if interpdir:
-                filename = INTERPDIR + "ave." + t + "." + var + ".nc"
-                NCin = NC.netcdf_file(filename, "r")
-                B = NCin.variables[var].data.copy()
-                NCin.close()
+                filename = INTERPDIR / "ave." + t + "." + var + ".nc"
+                B = netcdf4.readfile(filename, var)
                 B[~tmask1] = np.NaN
 
                 M = vertical_plane_interpolator(Mask2, Mask1, B, side)
@@ -158,7 +155,7 @@ def main(
                     M[:, Lat_Ind[iRiver]] = C[iRiver, it]
                 if side in ["S", "N"]:
                     M[:, Lon_Ind[iRiver]] = C[iRiver, it]
-            # writeCheckFile()
+            # writeCheckFile(OUTPUTDIR, M, Mask2, side,t,var, interpdir)
             F.write(M)
         F.write(M)
         F.write(M)
