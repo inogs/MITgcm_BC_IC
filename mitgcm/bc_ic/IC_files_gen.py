@@ -9,10 +9,10 @@ from bitsea.commons.mask import Mask
 from bitsea.commons.utils import addsep
 from bitsea.commons.utils import file2stringlist
 
-from .general import mask
-from .general import NetCDF_phys_Files
-from .general import NetCDF_phys_Vars
-from .general import space_intepolator_griddata
+from mitgcm.bc_ic.general import mask
+from mitgcm.bc_ic.general import NetCDF_phys_Files
+from mitgcm.bc_ic.general import NetCDF_phys_Vars
+from mitgcm.bc_ic.general import space_intepolator_griddata
 
 
 def argument():

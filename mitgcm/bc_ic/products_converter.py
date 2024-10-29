@@ -109,7 +109,7 @@ if __name__ == "__main__":
         config = json.load(f)
     exit(
         main(
-            cnofig=config,
+            config=config,
             maskfile=args.maskfile,
             rundate=args.rundate,
             inputdir=args.inputdir,

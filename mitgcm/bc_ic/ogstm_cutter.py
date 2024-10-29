@@ -5,10 +5,10 @@ import numpy as np
 import scipy.io as NC
 from bitsea.commons.dataextractor import DataExtractor
 from bitsea.commons.mask import Mask
+from bitsea.commons.utils import file2stringlist
 
-from .general import addsep
-from .general import file2stringlist
-from .general import mask
+from mitgcm.bc_ic.general import addsep
+from mitgcm.bc_ic.general import mask
 
 
 def argument():
@@ -202,7 +202,7 @@ if __name__ == "__main__":
             inputdir=args.inputdir,
             outputdir=args.outputdir,
             datatype=args.datatype,
-            modelvarlist=args.modelvarlist,
+            modelvarlist=modelvarlist,
             timelist=args.timelist,
             nativemask=args.nativemask,
             _mask=args.mask,

@@ -1,7 +1,7 @@
 import argparse
 
-from .general import mask
-from .general import np
+from mitgcm.bc_ic.general import mask
+import numpy as np
 
 
 def argument():
