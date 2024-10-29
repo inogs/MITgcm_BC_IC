@@ -1,4 +1,16 @@
 import argparse
+from pathlib import Path
+
+import netCDF4 as NC
+import numpy as np
+import read_river_csv
+from bitsea.commons import netcdf4
+from bitsea.commons.utils import file2stringlist
+from general import mask
+from general import side_tmask
+from general import vertical_plane_interpolator
+from general import zeroPadding
+
 
 def argument():
     parser = argparse.ArgumentParser(
@@ -68,39 +80,26 @@ def argument():
     return parser.parse_args()
 
 
-from pathlib import Path
-from general import mask, side_tmask, zeroPadding, vertical_plane_interpolator
-import read_river_csv
-from bitsea.commons import netcdf4
-from bitsea.commons.utils import file2stringlist
-import os
-import numpy as np
-import netCDF4 as NC
-
-
-
-def writeCheckFile(OUTPUTDIR, M, Mask2, side,t,var, interpdir, tmask2):
-    checkfile = OUTPUTDIR /  "CHECK/OBC_"  + side + "." + t + "." + var + ".nc"
+def writeCheckFile(OUTPUTDIR, M, Mask2, side, t, var, interpdir, tmask2):
+    checkfile = OUTPUTDIR / "CHECK/OBC_" + side + "." + t + "." + var + ".nc"
     Mcheck = M.copy()
     if interpdir is not None:
-        missing_value=1.e+20
-        Mcheck[~tmask2]=missing_value
+        missing_value = 1.0e20
+        Mcheck[~tmask2] = missing_value
     else:
-        missing_value=0
+        missing_value = 0
 
-    NCout =NC.Dataset(checkfile,"w")
-    NCout.createDimension("Lon"  ,Mask2.Lon.size)
-    NCout.createDimension("Lat"  ,Mask2.Lat.size)
-    NCout.createDimension("Depth",Mask2.jpk)
-    if side in [ "E" , "W"]:
-        ncvar = NCout.createVariable(var,'f',('Depth','Lat'))
-    if side in [ "N" , "S"]:
-        ncvar = NCout.createVariable(var,'f',('Depth','Lon'))
-    setattr(ncvar, 'missing_value', missing_value)
+    NCout = NC.Dataset(checkfile, "w")
+    NCout.createDimension("Lon", Mask2.Lon.size)
+    NCout.createDimension("Lat", Mask2.Lat.size)
+    NCout.createDimension("Depth", Mask2.jpk)
+    if side in ["E", "W"]:
+        ncvar = NCout.createVariable(var, "f", ("Depth", "Lat"))
+    if side in ["N", "S"]:
+        ncvar = NCout.createVariable(var, "f", ("Depth", "Lon"))
+    setattr(ncvar, "missing_value", missing_value)
     ncvar[:] = Mcheck
     NCout.close()
-
-
 
 
 def main(
@@ -114,7 +113,7 @@ def main(
     timelist,
 ):
     Mask2 = mask(outmaskfile)
-    tmask2 = side_tmask(side, Mask2)
+    tmask2 = side_tmask(side, Mask2)  # noqa
     if interpdir is not None:
         INTERPDIR = Path(interpdir)
         Mask1 = mask(nativemask)
@@ -124,7 +123,7 @@ def main(
     MODELVARS = file2stringlist(modelvarlist)
     TIMELIST = file2stringlist(timelist)
     OUTPUTDIR.mkdir(parents=True, exist_ok=True)
-    CHECK=OUTPUTDIR / "CHECK"
+    CHECK = OUTPUTDIR / "CHECK"
     CHECK.mkdir(parents=True, exist_ok=True)
 
     for var in MODELVARS:
