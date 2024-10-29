@@ -6,10 +6,11 @@ import numpy as np
 import read_river_csv
 from bitsea.commons import netcdf4
 from bitsea.commons.utils import file2stringlist
-from general import mask
-from general import side_tmask
-from general import vertical_plane_interpolator
-from general import zeroPadding
+
+from mitgcm.bc_ic.general import mask
+from mitgcm.bc_ic.general import side_tmask
+from mitgcm.bc_ic.general import vertical_plane_interpolator
+from mitgcm.bc_ic.general import zeroPadding
 
 
 def argument():
