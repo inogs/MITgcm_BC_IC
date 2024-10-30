@@ -1,6 +1,6 @@
 import argparse
 
-from general import mask
+from mitgcm.bc_ic.general import mask
 import numpy as np
 
 

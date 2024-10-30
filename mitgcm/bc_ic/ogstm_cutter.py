@@ -7,8 +7,8 @@ from bitsea.commons.dataextractor import DataExtractor
 from bitsea.commons.mask import Mask
 from bitsea.commons.utils import file2stringlist
 
-from general import addsep
-from general import mask
+from mitgcm.bc_ic.general import addsep
+from mitgcm.bc_ic.general import mask
 
 
 def argument():

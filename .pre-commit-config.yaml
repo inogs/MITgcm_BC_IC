@@ -35,3 +35,5 @@ repos:
   rev: 0.20.0
   hooks:
     - id: deptry
+      entry: poetry run deptry
+      args: ["."]
