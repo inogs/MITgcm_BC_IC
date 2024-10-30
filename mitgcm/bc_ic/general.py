@@ -87,13 +87,13 @@ def vertical_plane_interpolator(mask2, mask1, M2d, side):
     '''
 
     if side in ['E', 'W']:
-        M = np.zeros((mask2.jpk, mask2.Lat.size), dtype=np.float32)
-        X1 = mask1.Lat
-        X2 = mask2.Lat
+        M = np.zeros((mask2.jpk, mask2.jpj), dtype=np.float32)
+        X1 = mask1.lat
+        X2 = mask2.lat
     if side in ['N', 'S']:
-        M = np.zeros((mask2.jpk, mask2.Lon.size), dtype=np.float32)
-        X1 = mask1.Lon
-        X2 = mask2.Lon
+        M = np.zeros((mask2.jpk, mask2.jpi), dtype=np.float32)
+        X1 = mask1.lon
+        X2 = mask2.lon
 
     if np.isnan(M2d).all():
         M[:, :] = np.NaN
@@ -101,7 +101,7 @@ def vertical_plane_interpolator(mask2, mask1, M2d, side):
 
     for jk in range(mask2.jpk):
         jkb, jka, t_interp = data_for_linear_interp(
-            mask1.Depth, mask2.Depth[jk])
+            mask1.zlevels, mask2.zlevels[jk])
         Horizontal_Profile_b = M2d[jkb, :]
         Horizontal_Profile_a = M2d[jka, :]
         waterpoints_b = ~np.isnan(Horizontal_Profile_b)
@@ -151,17 +151,17 @@ def space_intepolator_plane(mask2, mask1, M3d):
 
     for k in range(mask2.jpk):
         A = SeaOverLand(M3d[k, :, :], 30)
-        f = interpolate.interp2d(mask1.Lon, mask1.Lat, A, kind='linear')
-        M3d_out[k, :, :] = f(mask2.Lon, mask2.Lat)
+        f = interpolate.interp2d(mask1.lon, mask1.lat, A, kind='linear')
+        M3d_out[k, :, :] = f(mask2.lon, mask2.lat)
 
     M3d_out[~mask2.tmask] = np.nan
 
     if np.isnan(M3d_out[mask2.tmask]).any():
         print("nans in space_interpolator_plane:",
-              np.isnan(M3d_out[mask2.tmask]).sum())
+              np.isnan(M3d_out[mask2.mask]).sum())
         for k in range(mask2.jpk):
             a = M3d_out[k, :, :]
-            lev_mask = mask2.tmask[k, :, :]
+            lev_mask = mask2.mask[k, :, :]
             print(k, np.isnan(a[lev_mask]).sum())
 
     return M3d_out
@@ -170,13 +170,13 @@ def space_intepolator_plane(mask2, mask1, M3d):
 def space_intepolator_griddata(mask2, mask1, M3d):
     '''Interpolates a 3d matrix using horizontal slices
     '''
-    X1, Y1 = np.meshgrid(mask1.Lon, mask1.Lat)
-    X2, Y2 = np.meshgrid(mask2.Lon, mask2.Lat)
+    X1, Y1 = np.meshgrid(mask1.lon, mask1.lat)
+    X2, Y2 = np.meshgrid(mask2.lon, mask2.lat)
     M3d_out = np.zeros((mask2.jpk, mask2.jpj, mask2.jpi), np.float32) * np.nan
 
     for k in range(mask2.jpk):
         jkb, jka, t_interp = data_for_linear_interp(
-            mask1.Depth, mask2.Depth[k])
+            mask1.zlevels, mask2.zlevels[k])
         # indipendent from umask, vmask, or tmask
         tmask1 = (M3d[jkb, :, :] < 1.e+19) & ~np.isnan(M3d[jkb, :, :])
         # tmask1 = mask1.tmask[jkb,:,:]
@@ -198,12 +198,12 @@ def space_intepolator_griddata(mask2, mask1, M3d):
 
     # M3d_out[~mask2.tmask] = np.nan # in order to avoid problems
 
-    if np.isnan(M3d_out[mask2.tmask]).any():
+    if np.isnan(M3d_out[mask2.mask]).any():
         print("nans in space_interpolator_griddata:",
-              np.isnan(M3d_out[mask2.tmask]).sum())
+              np.isnan(M3d_out[mask2.mask]).sum())
         for k in range(mask2.jpk):
             a = M3d_out[k, :, :]
-            lev_mask = mask2.tmask[k, :, :]
+            lev_mask = mask2.mask[k, :, :]
             print(k, np.isnan(a[lev_mask]).sum())
 
     return M3d_out
@@ -211,18 +211,41 @@ def space_intepolator_griddata(mask2, mask1, M3d):
 
 def side_tmask(side, mask):
     if side == "N":
-        tmask = mask.tmask[:, -1, :]
+        tmask = mask.mask[:, -1, :]
     if side == "S":
-        tmask = mask.tmask[:, 0, :]
+        tmask = mask.mask[:, 0, :]
     if side == "E":
-        tmask = mask.tmask[:, :, -1]
+        tmask = mask.mask[:, :, -1]
     if side == "W":
-        tmask = mask.tmask[:, :, 0]
+        tmask = mask.mask[:, :, 0]
     return tmask
 
 
 def zeroPadding(side, mask):
     if side in ['E', 'W']:
-        return np.zeros((mask.jpk, mask.Lat.size), dtype=np.float32)
+        return np.zeros((mask.jpk, mask.jpj), dtype=np.float32)
     if side in ["S", "N"]:
-        return np.zeros((mask.jpk, mask.Lon.size), dtype=np.float32)
+        return np.zeros((mask.jpk, mask.jpi), dtype=np.float32)
+
+
+def writeSideCheckFile(OUTPUTDIR, M, Mask2, side, t, var, interpdir):
+    tmask2 = side_tmask(side, Mask2)
+    checkfile = OUTPUTDIR / ("CHECK/OBC_" + side + "." + t + "." + var + ".nc")
+    Mcheck = M.copy()
+    if interpdir is not None:
+        missing_value = 1.0e20
+        Mcheck[~tmask2] = missing_value
+    else:
+        missing_value = 0
+
+    NCout = NC.Dataset(checkfile, "w")
+    NCout.createDimension("Lon", Mask2.jpi)
+    NCout.createDimension("Lat", Mask2.jpj)
+    NCout.createDimension("Depth", Mask2.jpk)
+    if side in ["E", "W"]:
+        ncvar = NCout.createVariable(var, "f", ("Depth", "Lat"))
+    if side in ["N", "S"]:
+        ncvar = NCout.createVariable(var, "f", ("Depth", "Lon"))
+    setattr(ncvar, "missing_value", missing_value)
+    ncvar[:] = Mcheck
+    NCout.close()

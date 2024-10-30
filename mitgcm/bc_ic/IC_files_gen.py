@@ -1,18 +1,6 @@
 import argparse
-import os
+from bitsea.utilities.argparse_types import existing_dir_path,generic_path
 
-import numpy as np
-import scipy.io as NC
-from bitsea.commons import netcdf4
-from bitsea.commons.dataextractor import DataExtractor
-from bitsea.commons.mask import Mask
-from bitsea.commons.utils import addsep
-from bitsea.commons.utils import file2stringlist
-
-from mitgcm.bc_ic.general import mask
-from mitgcm.bc_ic.general import NetCDF_phys_Files
-from mitgcm.bc_ic.general import NetCDF_phys_Vars
-from mitgcm.bc_ic.general import space_intepolator_griddata
 
 
 def argument():
@@ -26,7 +14,7 @@ def argument():
         )
     )
     parser.add_argument(
-        "--inputdir", "-i", type=str, required=True, help="/some/path/"
+        "--inputdir", "-i", type=existing_dir_path, required=True, help="/some/path/"
     )
 
     parser.add_argument(
@@ -37,7 +25,7 @@ def argument():
         help="/some/path/outmask.nc",
     )
     parser.add_argument(
-        "--outputdir", "-o", type=str, required=True, help="/some/path/"
+        "--outputdir", "-o", type=generic_path, required=True, help="/some/path/"
     )
     parser.add_argument(
         "--nativemask",
@@ -62,70 +50,40 @@ def argument():
 
     return parser.parse_args()
 
+import os
+import numpy as np
+from bitsea.commons import netcdf4
+from bitsea.commons.dataextractor import DataExtractor
+from bitsea.commons.mask import Mask
 
-def writeCheckFile(*, M, outputdir, var, Mask1, Mask2):
-    Mcheck = M.copy()
+from bitsea.commons.utils import file2stringlist
+from mitgcm.bc_ic.general import space_intepolator_griddata
 
-    checkfile = outputdir + "CHECK/" + "IC_" + var + ".nc"
-    NCout = NC.netcdf_file(checkfile, "w")
-    NCout.createDimension("Lon", Mask2.Lon.size)
-    NCout.createDimension("Lat", Mask2.Lat.size)
-    NCout.createDimension("Depth", Mask2.jpk)
-    ncvar = NCout.createVariable(var, "f", ("Depth", "Lat", "Lon"))
-    setattr(ncvar, "missing_value", 1.0e20)
-    ncvar[:] = Mcheck
-    NCout.close()
 
 
 def gen_ic_files(
     *, inputdir, outputdir, nativemask, time, outmaskfile, modelvarlist
 ):
-    INPUTDIR = addsep(inputdir)
-    OUTPUTDIR = addsep(outputdir)
-    os.system("mkdir -p " + OUTPUTDIR)
-    os.system("mkdir -p " + OUTPUTDIR + "CHECK")
+    INPUTDIR = inputdir
+    OUTPUTDIR = outputdir
+    OUTPUTDIR.mkdir(parents=True, exist_ok=True)
+    (OUTPUTDIR / "CHECK").mkdir(parents=True, exist_ok=True)
     TIMELIST = file2stringlist(time)
-    Mask_bitsea1 = Mask(nativemask)
-    Mask1 = mask(nativemask)
-    Mask2 = mask(outmaskfile)
+    #Mask_bitsea1 = Mask(nativemask)
+    Mask1 = Mask(nativemask)
+    Mask2 = Mask(outmaskfile)
 
     if modelvarlist:
         MODELVARS = modelvarlist
 
         for var in MODELVARS:
-            inputfile = INPUTDIR + "ave." + TIMELIST[0] + "." + var + ".nc"
-            outBinaryFile = OUTPUTDIR + "IC_" + var + ".dat"
-            B = DataExtractor(Mask_bitsea1, inputfile, var).values
+            inputfile = INPUTDIR / ("ave." + TIMELIST[0] + "." + var + ".nc")
+            outBinaryFile = OUTPUTDIR / ("IC_" + var + ".dat")
+            B = DataExtractor(Mask1, inputfile, var).values
 
             M = space_intepolator_griddata(Mask2, Mask1, B)
-
-            writeCheckFile(
-                M=M, outputdir=OUTPUTDIR, var=var, Mask1=Mask1, Mask2=Mask2
-            )
-            F = open(outBinaryFile, "wb")
-            for jk in range(Mask2.jpk):
-                F.write(M[jk, :, :])
-            F.close()
-
-    else:
-        MODELVARS = ["U", "V", "T", "S"]
-        for var in MODELVARS:
-            inputfile = (
-                INPUTDIR
-                + TIMELIST[0][:8]
-                + "_"
-                + NetCDF_phys_Files[var]
-                + ".nc"
-            )
-            outBinaryFile = OUTPUTDIR + "IC_" + var + ".dat"
-
-            B = netcdf4.readfile(inputfile, NetCDF_phys_Vars[var])[
-                0, : Mask1.jpk, :, :
-            ]
-            B[~Mask1.tmask] = np.NaN
-
-            M = space_intepolator_griddata(Mask2, Mask1, B)
-            writeCheckFile()
+            checkfile = OUTPUTDIR / "CHECK" / ("IC_" + var + ".nc")
+            netcdf4.write_3d_file(M, var, checkfile, Mask2, compression=True)
             F = open(outBinaryFile, "wb")
             for jk in range(Mask2.jpk):
                 F.write(M[jk, :, :])

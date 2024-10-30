@@ -251,7 +251,7 @@ def get_RiverPHYS_Data(lato, varname, timelist, Mask, river_list):
             if varname == 'S':
                 OUT[counter, :] = R.sali
             if varname == 'V':
-                denom = R.nHcells * Mask.CellArea(lato, R.nVcells)
+                denom = R.nHcells * Mask.CellArea(R.iLon,R.iLat, lato, R.nVcells)
                 OUT[counter, :] = R.getTimeDischarge(timelist) / denom
             counter = counter + 1
     return Lon_Ind, Lat_Ind, OUT

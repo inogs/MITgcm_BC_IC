@@ -1,18 +1,6 @@
 import argparse
 from pathlib import Path
 
-import netCDF4 as NC
-import numpy as np
-import read_river_csv
-from bitsea.commons import netcdf4
-from bitsea.commons.utils import file2stringlist
-
-from mitgcm.bc_ic.general import mask
-from mitgcm.bc_ic.general import side_tmask
-from mitgcm.bc_ic.general import vertical_plane_interpolator
-from mitgcm.bc_ic.general import zeroPadding
-
-
 def argument():
     parser = argparse.ArgumentParser(
         description="""
@@ -81,26 +69,21 @@ def argument():
     return parser.parse_args()
 
 
-def writeCheckFile(OUTPUTDIR, M, Mask2, side, t, var, interpdir, tmask2):
-    checkfile = OUTPUTDIR / "CHECK/OBC_" + side + "." + t + "." + var + ".nc"
-    Mcheck = M.copy()
-    if interpdir is not None:
-        missing_value = 1.0e20
-        Mcheck[~tmask2] = missing_value
-    else:
-        missing_value = 0
+import netCDF4 as NC
+import numpy as np
+import read_river_csv
+from bitsea.commons import netcdf4
+from bitsea.commons.utils import file2stringlist
+from bitsea.commons.mask import Mask
 
-    NCout = NC.Dataset(checkfile, "w")
-    NCout.createDimension("Lon", Mask2.Lon.size)
-    NCout.createDimension("Lat", Mask2.Lat.size)
-    NCout.createDimension("Depth", Mask2.jpk)
-    if side in ["E", "W"]:
-        ncvar = NCout.createVariable(var, "f", ("Depth", "Lat"))
-    if side in ["N", "S"]:
-        ncvar = NCout.createVariable(var, "f", ("Depth", "Lon"))
-    setattr(ncvar, "missing_value", missing_value)
-    ncvar[:] = Mcheck
-    NCout.close()
+#from mitgcm.bc_ic.general import mask
+from mitgcm.bc_ic.general import side_tmask
+from mitgcm.bc_ic.general import vertical_plane_interpolator
+from mitgcm.bc_ic.general import zeroPadding
+from mitgcm.bc_ic.general import writeSideCheckFile
+
+
+
 
 
 def main(
@@ -112,12 +95,13 @@ def main(
     outputdir,
     modelvarlist,
     timelist,
+    rivers=None,
 ):
-    Mask2 = mask(outmaskfile)
-    tmask2 = side_tmask(side, Mask2)  # noqa
+    Mask2 = Mask(outmaskfile)
+
     if interpdir is not None:
         INTERPDIR = Path(interpdir)
-        Mask1 = mask(nativemask)
+        Mask1 = Mask(nativemask)
         tmask1 = side_tmask(side, Mask1)
 
     OUTPUTDIR = Path(outputdir)
@@ -137,7 +121,12 @@ def main(
             )
         else:
             Lon_Ind, Lat_Ind, Conc = read_river_csv.get_RiverBFM_Data(side, var)
-        nSideRivers = Lon_Ind.size
+
+        if rivers is not None:
+            nSideRivers = Lon_Ind.size
+        else:
+            nSideRivers = 0
+
         for t in TIMELIST:
             M = zeroPadding(side, Mask2)
 
@@ -153,7 +142,7 @@ def main(
                     M[:, Lat_Ind[iRiver]] = Conc[iRiver]
                 if side in ["S", "N"]:
                     M[:, Lon_Ind[iRiver]] = Conc[iRiver]
-            # writeCheckFile(OUTPUTDIR, M, Mask2, side,t,var, interpdir, tmask2)
+            # writeSideCheckFile(OUTPUTDIR, M, Mask2, side,t,var, interpdir)
 
             F.write(M)
         F.write(M)
