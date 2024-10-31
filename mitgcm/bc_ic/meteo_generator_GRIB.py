@@ -181,7 +181,7 @@ for var in VARS[2:]:
         #pl.figure(1); pl.imshow(FrameMatrix); pl.colorbar(); pl.gca().invert_yaxis() ; pl.show(block=False)
         #pl.figure(2); pl.imshow(Mask1.tmask); pl.colorbar(); pl.gca().invert_yaxis() ; pl.show(block=False)
         #FM = FrameMatrix.copy()
-        #FM[~Mask1.tmask] = np.NaN
+        #FM[~Mask1.tmask] = np.nan
         #pl.figure(3); pl.imshow(FM); pl.colorbar(); pl.gca().invert_yaxis() ; pl.show(block=False)
         #import sys; sys.exit()
         '''

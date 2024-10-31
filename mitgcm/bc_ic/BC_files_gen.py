@@ -145,7 +145,7 @@ def main(
                 filename = INTERPDIR / ("ave." + t + "." + var + ".nc")
                 B = netcdf4.readfile(filename, var)
 
-                B[~tmask1] = np.NaN
+                B[~tmask1] = np.nan
                 M = vertical_plane_interpolator(Mask2, Mask1, B, side)
 
             for iRiver in range(nSideRivers):

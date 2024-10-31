@@ -122,7 +122,7 @@ def gen_ic_files(
             B = netcdf4.readfile(inputfile, NetCDF_phys_Vars[var])[
                 0, : Mask1.jpk, :, :
             ]
-            B[~Mask1.tmask] = np.NaN
+            B[~Mask1.tmask] = np.nan
 
             M = space_intepolator_griddata(Mask2, Mask1, B)
             writeCheckFile()
