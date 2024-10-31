@@ -1,13 +1,5 @@
 import argparse
-import os
 
-import numpy as np
-import scipy.io as NC
-from bitsea.commons.dataextractor import DataExtractor
-from bitsea.commons.mask import Mask
-from bitsea.commons.utils import file2stringlist
-
-from mitgcm.bc_ic.general import addsep
 
 
 def argument():
@@ -74,6 +66,17 @@ def argument():
     return parser.parse_args()
 
 
+import os
+
+import numpy as np
+import netCDF4 as NC
+from bitsea.commons.dataextractor import DataExtractor
+from bitsea.commons.mask import Mask
+from bitsea.commons.utils import file2stringlist
+
+from mitgcm.bc_ic.general import addsep
+
+
 def nearest_ind(array, value):
     DIST = (array - value) ** 2
     ind = np.nonzero(DIST == DIST.min())  # tuple
@@ -81,7 +84,7 @@ def nearest_ind(array, value):
 
 
 def create_Header(*, filename, Lon, Lat, Depth):
-    NCout = NC.netcdf_file(filename, "w")
+    NCout = NC.Dataset(filename, "w")
 
     NCout.createDimension("lon", Lon.size)
     NCout.createDimension("lat", Lat.size)
@@ -117,7 +120,6 @@ def main(
     MODELVARS = modelvarlist
     TIMELIST = file2stringlist(timelist)
 
-    #Mask_bitsea1 = Mask(nativemask)
     Mask1 = Mask(nativemask)
     Mask2 = Mask(_mask)
 
