@@ -96,7 +96,7 @@ def vertical_plane_interpolator(mask2, mask1, M2d, side):
         X2 = mask2.Lon
 
     if np.isnan(M2d).all():
-        M[:, :] = np.NaN
+        M[:, :] = np.nan
         return M
 
     for jk in range(mask2.jpk):

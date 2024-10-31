@@ -127,7 +127,7 @@ for var in ["T","S","U","V"]:
             NCin = NC.netcdf_file(filename,'r')
             B = NCin.variables[var].data.copy()
             NCin.close()
-            B[~tmask1] = np.NaN
+            B[~tmask1] = np.nan
 
             M = vertical_plane_interpolator(Mask2,Mask1,B,side)
                             

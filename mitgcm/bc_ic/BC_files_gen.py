@@ -132,7 +132,7 @@ for var in MODELVARS[rank::nranks]:
             B = NCin.variables[var].data.copy()
             NCin.close()
                         
-            B[~tmask1] = np.NaN
+            B[~tmask1] = np.nan
             M = vertical_plane_interpolator(Mask2,Mask1,B,side)
                             
         for iRiver in range(nSideRivers):
