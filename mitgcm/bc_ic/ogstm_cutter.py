@@ -8,7 +8,6 @@ from bitsea.commons.mask import Mask
 from bitsea.commons.utils import file2stringlist
 
 from mitgcm.bc_ic.general import addsep
-from mitgcm.bc_ic.general import mask
 
 
 def argument():
@@ -81,12 +80,12 @@ def nearest_ind(array, value):
     return int(ind[0][0])
 
 
-def create_Header(*, filename, Lon, Lat, cut_depth, Mask1):
+def create_Header(*, filename, Lon, Lat, Depth):
     NCout = NC.netcdf_file(filename, "w")
 
     NCout.createDimension("lon", Lon.size)
     NCout.createDimension("lat", Lat.size)
-    NCout.createDimension("depth", cut_depth)
+    NCout.createDimension("depth", Depth.size)
 
     ncvar = NCout.createVariable("lon", "f", ("lon",))
     ncvar[:] = Lon
@@ -94,7 +93,7 @@ def create_Header(*, filename, Lon, Lat, cut_depth, Mask1):
     ncvar[:] = Lat
 
     ncvar = NCout.createVariable("depth", "f", ("depth",))
-    ncvar[:] = Mask1.Depth[0:cut_depth]
+    ncvar[:] = Depth
 
     return NCout
 
@@ -118,23 +117,23 @@ def main(
     MODELVARS = modelvarlist
     TIMELIST = file2stringlist(timelist)
 
-    Mask_bitsea1 = Mask(nativemask)
-    Mask1 = mask(nativemask)
-    Mask2 = mask(_mask)
+    #Mask_bitsea1 = Mask(nativemask)
+    Mask1 = Mask(nativemask)
+    Mask2 = Mask(_mask)
 
     if side is None:
         cut_type = "Box"
     else:
         cut_type = "side"
 
-    cut_lon_0 = nearest_ind(Mask1.Lon, Mask2.Lon[0])
-    cut_lon_1 = nearest_ind(Mask1.Lon, Mask2.Lon[-1])
-    cut_lat_0 = nearest_ind(Mask1.Lat, Mask2.Lat[0])
-    cut_lat_1 = nearest_ind(Mask1.Lat, Mask2.Lat[-1])
-    cut_depth = nearest_ind(Mask1.Depth, Mask2.Depth[-1]) + 1
+    cut_lon_0 = nearest_ind(Mask1.lon, Mask2.lon[0])
+    cut_lon_1 = nearest_ind(Mask1.lon, Mask2.lon[-1])
+    cut_lat_0 = nearest_ind(Mask1.lat, Mask2.lat[0])
+    cut_lat_1 = nearest_ind(Mask1.lat, Mask2.lat[-1])
+    cut_depth = nearest_ind(Mask1.zlevels, Mask2.zlevels[-1]) + 1
 
-    Lon = Mask1.Lon[cut_lon_0 : cut_lon_1 + 1]
-    Lat = Mask1.Lat[cut_lat_0 : cut_lat_1 + 1]
+    Lon = Mask1.lon[cut_lon_0 : cut_lon_1 + 1]
+    Lat = Mask1.lat[cut_lat_0 : cut_lat_1 + 1]
 
     for time in TIMELIST:
         print(time, flush=True)
@@ -156,7 +155,7 @@ def main(
             inputfile = INPUTDIR + filename
 
             try:
-                M = DataExtractor(Mask_bitsea1, inputfile, invar).values
+                M = DataExtractor(Mask1, inputfile, invar).values
             except Exception:
                 raise ValueError("file %s cannot be read" % inputfile)
 
@@ -164,8 +163,7 @@ def main(
                 filename=cutfile,
                 Lon=Lon,
                 Lat=Lat,
-                cut_depth=cut_depth,
-                Mask1=Mask1,
+                Depth=Mask1.zlevels[0:cut_depth]
             )
             if cut_type == "Box":
                 ncvar = NCc.createVariable(var, "f", ("depth", "lat", "lon"))
