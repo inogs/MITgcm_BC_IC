@@ -3,10 +3,10 @@ from pathlib import Path
 
 import netCDF4 as NC
 import numpy as np
-import read_river_csv
 from bitsea.commons import netcdf4
 from bitsea.commons.utils import file2stringlist
 
+from mitgcm.bc_ic import read_river_csv
 from mitgcm.bc_ic.general import mask
 from mitgcm.bc_ic.general import side_tmask
 from mitgcm.bc_ic.general import vertical_plane_interpolator
