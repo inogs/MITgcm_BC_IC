@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 from bitsea.commons import netcdf4
 from bitsea.commons.dataextractor import DataExtractor
@@ -98,8 +99,8 @@ def gen_ic_files(
 if __name__ == "__main__":
     args = argument()
     gen_ic_files(
-        inputdir=args.inputdir,
-        outputdir=args.outputdir,
+        inputdir=Path(args.inputdir),
+        outputdir=Path(args.outputdir),
         nativemask=args.nativemask,
         time=args.time,
         outmaskfile=args.outmaskfile,
