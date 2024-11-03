@@ -5,9 +5,8 @@ import netCDF4 as NC
 import numpy as np
 from bitsea.commons.dataextractor import DataExtractor
 from bitsea.commons.mask import Mask
+from bitsea.commons.utils import addsep
 from bitsea.commons.utils import file2stringlist
-
-from mitgcm.bc_ic.general import addsep
 
 
 def argument():
