@@ -105,7 +105,7 @@ def main(
     modelvarlist,
     timelist,
     nativemask,
-    _mask,
+    mask,
     side,
 ):
     INPUTDIR = addsep(inputdir)
@@ -117,7 +117,7 @@ def main(
     TIMELIST = file2stringlist(timelist)
 
     Mask1 = Mask(nativemask)
-    Mask2 = Mask(_mask)
+    Mask2 = Mask(mask)
 
     if side is None:
         cut_type = "Box"
@@ -201,7 +201,7 @@ if __name__ == "__main__":
             modelvarlist=modelvarlist,
             timelist=args.timelist,
             nativemask=args.nativemask,
-            _mask=args.mask,
+            mask=args.mask,
             side=args.side,
         )
     )
