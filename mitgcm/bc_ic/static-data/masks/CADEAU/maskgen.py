@@ -48,8 +48,15 @@ def main(*, bathyfile, maskfile):
 
     Lat = 43.47265625 + np.arange(jpj) * 1.0 / 128
     Lon = 12.22265625 + np.arange(jpi) * 1.0 / 128
+    
+    Radius = 6371000.0  # m
+    e2t = np.ones((jpj,jpi),float)* Radius / 128
+    e1t = np.zeros((jpj,jpi),float)
+    for ji in range(jpi):
+        e1t[:,ji] = e2t[:,ji] * np.cos(Lat)
 
     # tmask construction
+    e3t = np.zeros((jpk,jpj,jpi),float)
 
     fid = open(bathyfile, "rb")
     domain_size = jpi * jpj
@@ -68,8 +75,12 @@ def main(*, bathyfile, maskfile):
                 LEVELS[jj, ji] = 0
             else:
                 for jk in range(jpk):
+                    e3t[jk,jj,ji]=delZ[jk]
                     if CellBottoms[jk] >= Bathy[jj, ji]:
+                        e3t[jk,jj,ji] = Bathy[jj, ji] - CellBottoms[jk-1]  
                         break
+
+
                 LEVELS[jj, ji] = jk + 1
 
     tmask = np.zeros((jpk, jpj, jpi), bool)
@@ -152,7 +163,7 @@ def main(*, bathyfile, maskfile):
     ncvar = ncOUT.createVariable("nav_lev", "f", ("depth",))
     ncvar[:] = Depth
     ncvar = ncOUT.createVariable("e3t", "f", ("z_a", "depth", "lat", "lon"))
-    ncvar[0, :] = tmask
+    ncvar[0, :] = e3t
 
     ncvar = ncOUT.createVariable(
         "nav_lon",
@@ -170,9 +181,9 @@ def main(*, bathyfile, maskfile):
     ncvar[:] = lat2d
 
     ncvar = ncOUT.createVariable("e1t", "f", ("z_a", "z_a", "lat", "lon"))
-    ncvar[:] = 0
+    ncvar[0,0,:] = e1t
     ncvar = ncOUT.createVariable("e2t", "f", ("z_a", "z_a", "lat", "lon"))
-    ncvar[:] = 0
+    ncvar[0,0,:] = e2t
 
     ncvar = ncOUT.createVariable("rivermask", "b", ("depth", "lat", "lon"))
     ncvar[:] = rivermask

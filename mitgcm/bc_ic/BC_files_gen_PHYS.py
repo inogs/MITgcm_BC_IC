@@ -1,13 +1,12 @@
 import argparse
 from pathlib import Path
 
-import netCDF4 as NC
 import numpy as np
 import read_river_csv
 from bitsea.commons import netcdf4
+from bitsea.commons.mask import Mask
 from bitsea.commons.utils import file2stringlist
 
-from mitgcm.bc_ic.general import mask
 from mitgcm.bc_ic.general import side_tmask
 from mitgcm.bc_ic.general import vertical_plane_interpolator
 from mitgcm.bc_ic.general import zeroPadding
@@ -67,28 +66,6 @@ def argument():
     return parser.parse_args()
 
 
-def writeCheckFile(OUTPUTDIR, M, Mask2, side, t, var, interpdir):
-    checkfile = OUTPUTDIR / "CHECK/OBC_" + side + "." + t + "." + var + ".nc"
-    Mcheck = M.copy()
-    if interpdir is not None:
-        missing_value = 1.0e20
-        # Mcheck[~tmask2]=missing_value
-    else:
-        missing_value = 0
-
-    NCout = NC.Dataset(checkfile, "w")
-    NCout.createDimension("Lon", Mask2.Lon.size)
-    NCout.createDimension("Lat", Mask2.Lat.size)
-    NCout.createDimension("Depth", Mask2.jpk)
-    if side in ["E", "W"]:
-        ncvar = NCout.createVariable(var, "f", ("Depth", "Lat"))
-    if side in ["N", "S"]:
-        ncvar = NCout.createVariable(var, "f", ("Depth", "Lon"))
-    setattr(ncvar, "missing_value", missing_value)
-    ncvar[:] = Mcheck
-    NCout.close()
-
-
 def main(
     *,
     side,
@@ -97,12 +74,13 @@ def main(
     nativemask,
     outputdir,
     timelist,
+    rivers=None,
 ):
-    Mask2 = mask(outmaskfile)
+    Mask2 = Mask(outmaskfile)
 
     if interpdir is not None:
         INTERPDIR = Path(interpdir)
-        Mask1 = mask(nativemask)
+        Mask1 = Mask(nativemask)
         tmask1 = side_tmask(side, Mask1)
 
     OUTPUTDIR = Path(outputdir)
@@ -139,9 +117,13 @@ def main(
 
         outBinaryFile = OUTPUTDIR / ("OBC_" + side + "_" + var + ".dat")
         print(outBinaryFile)
+        if rivers is not None:
+            nSideRivers = Lon_Ind.size
+        else:
+            nSideRivers = 0
+
         F = open(outBinaryFile, "wb")
 
-        nSideRivers = Lon_Ind.size
         for it, t in enumerate(TIMELIST):
             M = zeroPadding(side, Mask2)
 
