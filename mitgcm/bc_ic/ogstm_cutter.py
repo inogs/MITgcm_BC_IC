@@ -1,5 +1,13 @@
 import argparse
+from pathlib import Path
 
+import netCDF4 as NC
+import numpy as np
+from bitsea.commons.dataextractor import DataExtractor
+from bitsea.commons.mask import Mask
+from bitsea.commons.utils import file2stringlist
+
+from mitgcm.bc_ic.general import addsep
 
 
 def argument():
@@ -66,17 +74,6 @@ def argument():
     return parser.parse_args()
 
 
-import os
-
-import numpy as np
-import netCDF4 as NC
-from bitsea.commons.dataextractor import DataExtractor
-from bitsea.commons.mask import Mask
-from bitsea.commons.utils import file2stringlist
-
-from mitgcm.bc_ic.general import addsep
-
-
 def nearest_ind(array, value):
     DIST = (array - value) ** 2
     ind = np.nonzero(DIST == DIST.min())  # tuple
@@ -115,7 +112,7 @@ def main(
     INPUTDIR = addsep(inputdir)
     OUTPUTDIR = addsep(outputdir)
     datatype = datatype
-    os.system("mkdir -p " + OUTPUTDIR)
+    Path(OUTPUTDIR).mkdir(parents=True)
 
     MODELVARS = modelvarlist
     TIMELIST = file2stringlist(timelist)
@@ -165,7 +162,7 @@ def main(
                 filename=cutfile,
                 Lon=Lon,
                 Lat=Lat,
-                Depth=Mask1.zlevels[0:cut_depth]
+                Depth=Mask1.zlevels[0:cut_depth],
             )
             if cut_type == "Box":
                 ncvar = NCc.createVariable(var, "f", ("depth", "lat", "lon"))
