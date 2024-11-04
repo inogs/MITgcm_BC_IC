@@ -1,6 +1,17 @@
 import argparse
 from pathlib import Path
 
+import numpy as np
+from bitsea.commons import netcdf4
+from bitsea.commons.mask import Mask
+from bitsea.commons.utils import file2stringlist
+
+from mitgcm.bc_ic import read_river_csv
+from mitgcm.bc_ic.general import side_tmask
+from mitgcm.bc_ic.general import vertical_plane_interpolator
+from mitgcm.bc_ic.general import zeroPadding
+
+
 def argument():
     parser = argparse.ArgumentParser(
         description="""
@@ -69,23 +80,6 @@ def argument():
     return parser.parse_args()
 
 
-
-import numpy as np
-import read_river_csv
-from bitsea.commons import netcdf4
-from bitsea.commons.utils import file2stringlist
-from bitsea.commons.mask import Mask
-
-
-from mitgcm.bc_ic.general import side_tmask
-from mitgcm.bc_ic.general import vertical_plane_interpolator
-from mitgcm.bc_ic.general import zeroPadding
-from mitgcm.bc_ic.general import writeSideCheckFile
-
-
-
-
-
 def main(
     *,
     side,
@@ -134,7 +128,7 @@ def main(
                 filename = INTERPDIR / ("ave." + t + "." + var + ".nc")
                 B = netcdf4.readfile(filename, var)
 
-                B[~tmask1] = np.NaN
+                B[~tmask1] = np.nan
                 M = vertical_plane_interpolator(Mask2, Mask1, B, side)
 
             for iRiver in range(nSideRivers):

@@ -1,14 +1,12 @@
 import argparse
 from pathlib import Path
 
-import netCDF4 as NC
 import numpy as np
 import read_river_csv
 from bitsea.commons import netcdf4
-from bitsea.commons.utils import file2stringlist
 from bitsea.commons.mask import Mask
+from bitsea.commons.utils import file2stringlist
 
-from mitgcm.bc_ic.general import writeSideCheckFile
 from mitgcm.bc_ic.general import side_tmask
 from mitgcm.bc_ic.general import vertical_plane_interpolator
 from mitgcm.bc_ic.general import zeroPadding
@@ -68,7 +66,6 @@ def argument():
     return parser.parse_args()
 
 
-
 def main(
     *,
     side,
@@ -77,7 +74,7 @@ def main(
     nativemask,
     outputdir,
     timelist,
-    rivers = None
+    rivers=None,
 ):
     Mask2 = Mask(outmaskfile)
 
@@ -133,7 +130,7 @@ def main(
             if interpdir:
                 filename = INTERPDIR / ("ave." + t + "." + var + ".nc")
                 B = netcdf4.readfile(filename, var)
-                B[~tmask1] = np.NaN
+                B[~tmask1] = np.nan
 
                 M = vertical_plane_interpolator(Mask2, Mask1, B, side)
 

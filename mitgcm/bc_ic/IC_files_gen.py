@@ -1,6 +1,14 @@
 import argparse
-from bitsea.utilities.argparse_types import existing_dir_path,generic_path
+from pathlib import Path
 
+from bitsea.commons import netcdf4
+from bitsea.commons.dataextractor import DataExtractor
+from bitsea.commons.mask import Mask
+from bitsea.commons.utils import file2stringlist
+from bitsea.utilities.argparse_types import existing_dir_path
+from bitsea.utilities.argparse_types import generic_path
+
+from mitgcm.bc_ic.general import space_intepolator_griddata
 
 
 def argument():
@@ -14,7 +22,11 @@ def argument():
         )
     )
     parser.add_argument(
-        "--inputdir", "-i", type=existing_dir_path, required=True, help="/some/path/"
+        "--inputdir",
+        "-i",
+        type=existing_dir_path,
+        required=True,
+        help="/some/path/",
     )
 
     parser.add_argument(
@@ -25,7 +37,11 @@ def argument():
         help="/some/path/outmask.nc",
     )
     parser.add_argument(
-        "--outputdir", "-o", type=generic_path, required=True, help="/some/path/"
+        "--outputdir",
+        "-o",
+        type=generic_path,
+        required=True,
+        help="/some/path/",
     )
     parser.add_argument(
         "--nativemask",
@@ -50,16 +66,6 @@ def argument():
 
     return parser.parse_args()
 
-import os
-import numpy as np
-from bitsea.commons import netcdf4
-from bitsea.commons.dataextractor import DataExtractor
-from bitsea.commons.mask import Mask
-
-from bitsea.commons.utils import file2stringlist
-from mitgcm.bc_ic.general import space_intepolator_griddata
-
-
 
 def gen_ic_files(
     *, inputdir, outputdir, nativemask, time, outmaskfile, modelvarlist
@@ -69,7 +75,7 @@ def gen_ic_files(
     OUTPUTDIR.mkdir(parents=True, exist_ok=True)
     (OUTPUTDIR / "CHECK").mkdir(parents=True, exist_ok=True)
     TIMELIST = file2stringlist(time)
-    #Mask_bitsea1 = Mask(nativemask)
+    # Mask_bitsea1 = Mask(nativemask)
     Mask1 = Mask(nativemask)
     Mask2 = Mask(outmaskfile)
 
@@ -93,8 +99,8 @@ def gen_ic_files(
 if __name__ == "__main__":
     args = argument()
     gen_ic_files(
-        inputdir=args.inputdir,
-        outputdir=args.outputdir,
+        inputdir=Path(args.inputdir),
+        outputdir=Path(args.outputdir),
         nativemask=args.nativemask,
         time=args.time,
         outmaskfile=args.outmaskfile,

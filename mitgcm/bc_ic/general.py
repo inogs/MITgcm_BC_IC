@@ -1,25 +1,26 @@
-import numpy as np
-
 import netCDF4
-import os
-from bitsea.commons.utils import data_for_linear_interp, Time_Interpolation
-from bitsea.commons.utils import addsep, file2stringlist
-from bitsea.commons.interpolators import SeaOverLand
-from scipy import interpolate
+import numpy as np
 import scipy.io as NC
+from bitsea.commons.interpolators import SeaOverLand
+from bitsea.commons.utils import data_for_linear_interp
+from scipy import interpolate
 
 
-NetCDF_phys_Vars = {'U': 'vozocrtx', 'V': 'vomecrty',
-                    'T': 'votemper', 'S': 'vosaline'}
-NetCDF_phys_Files = {'U': 'U', 'V': 'V', 'T': 'T', 'S': 'S'}
+NetCDF_phys_Vars = {
+    "U": "vozocrtx",
+    "V": "vomecrty",
+    "T": "votemper",
+    "S": "vosaline",
+}
+NetCDF_phys_Files = {"U": "U", "V": "V", "T": "T", "S": "S"}
 
 
-class mask():
+class mask:
     def __init__(self, filename=None, loadtmask=True):
         if filename is None:
-            self.Lat = 0.
-            self.Lon = 0.
-            self.Depth = 0.
+            self.Lat = 0.0
+            self.Lon = 0.0
+            self.Depth = 0.0
             self.jpk = 0
             self.tmask = 0
             self.jpi = 0
@@ -43,8 +44,8 @@ class mask():
                 self.Depth = np.array(dset.variables["nav_lev"])
 
             try:
-                self.CellBottoms = np.array(dset.variables['CellBottoms'])
-            except:
+                self.CellBottoms = np.array(dset.variables["CellBottoms"])
+            except KeyError:
                 self.CellBottoms = None
 
             if ("tmask" in dset.variables) and (loadtmask):
@@ -65,43 +66,44 @@ class mask():
             self.jpj = self.Lat.size
 
     def CellArea(self, side, nCells):
-        '''
+        """
         Arguments:
         * side   * string, can be 'E','S','W' or 'N'
-        * nCells * integer, read on xls river file 
-        '''
+        * nCells * integer, read on xls river file
+        """
         Radius = 6371000.0  # m
-        Depth = self.CellBottoms[nCells-1]
-        E_width = np.deg2rad(self.delta)*Radius
+        Depth = self.CellBottoms[nCells - 1]
+        E_width = np.deg2rad(self.delta) * Radius
         if side in ["E", "W"]:
-            return E_width*Depth
+            return E_width * Depth
         if side == "S":
-            return E_width*Depth*np.cos(self.Lat[0]*np.pi/180)
+            return E_width * Depth * np.cos(self.Lat[0] * np.pi / 180)
         if side == "N":
-            return E_width*Depth*np.cos(self.Lat[-1]*np.pi/180)
+            return E_width * Depth * np.cos(self.Lat[-1] * np.pi / 180)
 
 
 def vertical_plane_interpolator(mask2, mask1, M2d, side):
-    '''Interpolates a 2d vertical matrix by using horizontal profiles
+    """Interpolates a 2d vertical matrix by using horizontal profiles
     M2d size is [jpk, LonSize, or LatSize]
-    '''
+    """
 
-    if side in ['E', 'W']:
+    if side in ["E", "W"]:
         M = np.zeros((mask2.jpk, mask2.jpj), dtype=np.float32)
         X1 = mask1.lat
         X2 = mask2.lat
-    if side in ['N', 'S']:
+    if side in ["N", "S"]:
         M = np.zeros((mask2.jpk, mask2.jpi), dtype=np.float32)
         X1 = mask1.lon
         X2 = mask2.lon
 
     if np.isnan(M2d).all():
-        M[:, :] = np.NaN
+        M[:, :] = np.nan
         return M
 
     for jk in range(mask2.jpk):
         jkb, jka, t_interp = data_for_linear_interp(
-            mask1.zlevels, mask2.zlevels[jk])
+            mask1.zlevels, mask2.zlevels[jk]
+        )
         Horizontal_Profile_b = M2d[jkb, :]
         Horizontal_Profile_a = M2d[jka, :]
         waterpoints_b = ~np.isnan(Horizontal_Profile_b)
@@ -109,56 +111,60 @@ def vertical_plane_interpolator(mask2, mask1, M2d, side):
 
         if waterpoints_b.any():
             Horiz_Profile_new_b = np.interp(
-                X2, X1[waterpoints_b], Horizontal_Profile_b[waterpoints_b])
+                X2, X1[waterpoints_b], Horizontal_Profile_b[waterpoints_b]
+            )
         if waterpoints_a.any():
             Horiz_Profile_new_a = np.interp(
-                X2, X1[waterpoints_a], Horizontal_Profile_b[waterpoints_a])
+                X2, X1[waterpoints_a], Horizontal_Profile_b[waterpoints_a]
+            )
 
-        M[jk, :] = Horiz_Profile_new_b * \
-            (1-t_interp) + Horiz_Profile_new_a * t_interp
+        M[jk, :] = (
+            Horiz_Profile_new_b * (1 - t_interp)
+            + Horiz_Profile_new_a * t_interp
+        )
 
         # Non lo calcola e si tiene il precedente, che ha sicuramente gia' calcolato
     return M
 
 
 def space_interpolator(mask2, mask1, M3d):
-    '''Interpolates a 3d matrix using latitudinal slices
-    '''
+    """Interpolates a 3d matrix using latitudinal slices"""
 
     nLon = mask2.Lon.size
     nLat = mask2.Lat.size
     M = np.zeros((mask2.jpk, nLat, nLon), np.float32)
     for j in range(nLat):
         jib, jia, t_interp = data_for_linear_interp(mask1.Lat, mask2.Lat[j])
-        M2db = vertical_plane_interpolator(mask2, mask1, M3d[:, jib, :], 'S')
-        M2da = vertical_plane_interpolator(mask2, mask1, M3d[:, jia, :], 'S')
+        M2db = vertical_plane_interpolator(mask2, mask1, M3d[:, jib, :], "S")
+        M2da = vertical_plane_interpolator(mask2, mask1, M3d[:, jia, :], "S")
         # communicate not nans each other ##########
         ii = np.isnan(M2db)
         jj = np.isnan(M2da)
         M2db[ii & ~jj] = M2da[ii & ~jj]
         M2da[jj & ~ii] = M2db[jj & ~ii]
         ############################################
-        M[:, j, :] = M2db * (1-t_interp) + M2da*t_interp
+        M[:, j, :] = M2db * (1 - t_interp) + M2da * t_interp
     return M
 
 
 def space_intepolator_plane(mask2, mask1, M3d):
-    '''Interpolates a 3d matrix using horizontal slices
-    '''
+    """Interpolates a 3d matrix using horizontal slices"""
     # X1,Y1 = np.meshgrid(mask1.Lon,mask1.Lat)
     # X2,Y2 = np.meshgrid(mask2.Lon,mask2.Lat)
     M3d_out = np.zeros((mask2.jpk, mask2.jpj, mask2.jpi), np.float32) * np.nan
 
     for k in range(mask2.jpk):
         A = SeaOverLand(M3d[k, :, :], 30)
-        f = interpolate.interp2d(mask1.lon, mask1.lat, A, kind='linear')
+        f = interpolate.interp2d(mask1.lon, mask1.lat, A, kind="linear")
         M3d_out[k, :, :] = f(mask2.lon, mask2.lat)
 
     M3d_out[~mask2.tmask] = np.nan
 
     if np.isnan(M3d_out[mask2.tmask]).any():
-        print("nans in space_interpolator_plane:",
-              np.isnan(M3d_out[mask2.mask]).sum())
+        print(
+            "nans in space_interpolator_plane:",
+            np.isnan(M3d_out[mask2.mask]).sum(),
+        )
         for k in range(mask2.jpk):
             a = M3d_out[k, :, :]
             lev_mask = mask2.mask[k, :, :]
@@ -168,23 +174,23 @@ def space_intepolator_plane(mask2, mask1, M3d):
 
 
 def space_intepolator_griddata(mask2, mask1, M3d):
-    '''Interpolates a 3d matrix using horizontal slices
-    '''
+    """Interpolates a 3d matrix using horizontal slices"""
     X1, Y1 = np.meshgrid(mask1.lon, mask1.lat)
     X2, Y2 = np.meshgrid(mask2.lon, mask2.lat)
     M3d_out = np.zeros((mask2.jpk, mask2.jpj, mask2.jpi), np.float32) * np.nan
 
     for k in range(mask2.jpk):
         jkb, jka, t_interp = data_for_linear_interp(
-            mask1.zlevels, mask2.zlevels[k])
+            mask1.zlevels, mask2.zlevels[k]
+        )
         # indipendent from umask, vmask, or tmask
-        tmask1 = (M3d[jkb, :, :] < 1.e+19) & ~np.isnan(M3d[jkb, :, :])
+        tmask1 = (M3d[jkb, :, :] < 1.0e19) & ~np.isnan(M3d[jkb, :, :])
         # tmask1 = mask1.tmask[jkb,:,:]
         if tmask1.sum() == 0:
-            print('All nans, return to upper layer ')
+            print("All nans, return to upper layer ")
             jkb = jkb - 1
             # tmask1 = mask1.tmask[jkb,:,:]
-            tmask1 = (M3d[jkb, :, :] < 1.e+19) & ~np.isnan(M3d[jkb, :, :])
+            tmask1 = (M3d[jkb, :, :] < 1.0e19) & ~np.isnan(M3d[jkb, :, :])
 
         Map2d = M3d[jkb, :, :]
         nP = tmask1.sum()
@@ -193,14 +199,17 @@ def space_intepolator_griddata(mask2, mask1, M3d):
         points[:, 1] = Y1[tmask1]
         values = Map2d[tmask1]
         MAP2d_nearest = interpolate.griddata(
-            points, values, (X2, Y2), 'nearest', fill_value=np.nan)
+            points, values, (X2, Y2), "nearest", fill_value=np.nan
+        )
         M3d_out[k, :, :] = MAP2d_nearest
 
     # M3d_out[~mask2.tmask] = np.nan # in order to avoid problems
 
     if np.isnan(M3d_out[mask2.mask]).any():
-        print("nans in space_interpolator_griddata:",
-              np.isnan(M3d_out[mask2.mask]).sum())
+        print(
+            "nans in space_interpolator_griddata:",
+            np.isnan(M3d_out[mask2.mask]).sum(),
+        )
         for k in range(mask2.jpk):
             a = M3d_out[k, :, :]
             lev_mask = mask2.mask[k, :, :]
@@ -222,7 +231,7 @@ def side_tmask(side, mask):
 
 
 def zeroPadding(side, mask):
-    if side in ['E', 'W']:
+    if side in ["E", "W"]:
         return np.zeros((mask.jpk, mask.jpj), dtype=np.float32)
     if side in ["S", "N"]:
         return np.zeros((mask.jpk, mask.jpi), dtype=np.float32)
