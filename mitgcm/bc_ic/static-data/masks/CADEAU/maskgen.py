@@ -50,10 +50,10 @@ def main(*, bathyfile, maskfile):
     Lon = 12.22265625 + np.arange(jpi) * 1.0 / 128
     
     Radius = 6371000.0  # m
-    e2t = np.ones((jpj,jpi),float)* Radius / 128
+    e2t = np.ones((jpj,jpi),float)* Radius * np.deg2rad(1.0 / 128)
     e1t = np.zeros((jpj,jpi),float)
     for ji in range(jpi):
-        e1t[:,ji] = e2t[:,ji] * np.cos(Lat)
+        e1t[:,ji] = e2t[:,ji] * np.cos(np.deg2rad(Lat))
 
     # tmask construction
     e3t = np.zeros((jpk,jpj,jpi),float)
