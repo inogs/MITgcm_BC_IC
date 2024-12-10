@@ -9,6 +9,8 @@ import json
 import pandas as pd
 import geopandas as gpd
 from pyproj import CRS #, Transformer
+from xarray.core.formatting import dim_summary_limited
+
 
 #
 
@@ -110,7 +112,7 @@ def remove_puddles(
         ds = remove_MG_lagoon(ds)
 
     if isinstance(ds, xr.Dataset):
-        mask_puddles = xr.where(ds == ds, 1, 0).elevation.values * np.where(ds == 0., 0, 1)
+        mask_puddles = xr.where(ds == ds, 1, 0).elevation.values * np.where(ds.elevation.values == 0., 0, 1)
     elif isinstance(ds, xr.DataArray):
         mask_puddles = xr.where(ds == ds, 1, 0).values * np.where(ds == 0., 0, 1)
     elif isinstance(ds, np.ndarray):
@@ -118,8 +120,21 @@ def remove_puddles(
     #mask_puddles =
     puddles = cc3d.connected_components(mask_puddles, connectivity=4)
     removed_puddles = cc3d.dust(puddles, connectivity=4, threshold=threshold)
-    ds = ds * removed_puddles #np.where(removed_puddles == 0., np.nan, 1)
+    if isinstance(ds, xr.Dataset):
+        ds = ds.elevation * removed_puddles  # np.where(removed_puddles == 0., np.nan, 1)
+    else:
+        ds = ds * removed_puddles #np.where(removed_puddles == 0., np.nan, 1)
 
+    return ds
+
+def remove_isles(
+        ds,
+):
+    idxs = [slice(1086,1088), slice(1088,1090), slice(1015,1018), slice(1017,1019), slice(900,902), 846]
+    idys = [2, 1, slice(1,3), 0, 1, 1]
+    sub_vals = [-25., -42., np.nan, np.nan, np.nan, np.nan]
+    for ix, iy, sv in zip(idxs, idys, sub_vals):
+        ds[iy, ix] = sv
     return ds
 
 def remove_MG_lagoon(
@@ -323,7 +338,7 @@ def combine_lagoons(
     return bathy_tot
 
 def main():
-    final_bathy_file = 'data/NADRI_bathymetry_no_lagoons.nc' #'data/NADRI_bathymetry.nc'
+    final_bathy_file = 'data/NADRI_bathymetry_no_lagoons_no_isles.nc' #'data/NADRI_bathymetry.nc'
     interpolated_bathy_file = 'data/NADRI_interp.nc'
     italy_bathy_file = 'data/ITA_bathymetry.nc'
     lagoons_dir = '/home/fabio/Trieste/PhD/GoT_Isonzo_discharge/Venice_lagoon/' #'/home/fabio/PhD/PhD_Cafè/VeniceLagoon/'
@@ -346,6 +361,7 @@ def main():
         #                             read_Grado_Marano_lagoon(ds_clean, grado_bathy_file),
         #                             ds_clean)
         #ds_lagoons = remove_puddles(ds_lagoons, threshold = 100)
+        ds_clean = remove_isles(ds_clean)
         ds_lagoons = remove_puddles(ds_clean, threshold=100)
         ds_lagoons.to_netcdf(final_bathy_file)
     else:
