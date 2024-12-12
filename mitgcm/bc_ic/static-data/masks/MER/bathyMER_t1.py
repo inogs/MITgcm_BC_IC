@@ -95,11 +95,9 @@ def interpolate_bathy(
 
 def remove_puddles(
         ds: xr.Dataset,
-        threshold: int = 500,
         noMG: bool = False,
 ) -> xr.Dataset:
-    """Removes unconnected pixels (puddles) from the domain, leaving only ones above
-    a set threshold in pixel number.
+    """Removes unconnected pixels (puddles) from the domain, leaving only the largest region, that is, the basin
     Args:
         ds (xr.DataArray): domain bathymetry
         threshold (np.ndarray): minimum number of pixels of a puddle
@@ -117,13 +115,13 @@ def remove_puddles(
         mask_puddles = xr.where(ds == ds, 1, 0).values * np.where(ds == 0., 0, 1)
     elif isinstance(ds, np.ndarray):
         mask_puddles = np.where(ds == ds, 1, 0) * np.where(ds == 0., 0, 1)
-    #mask_puddles =
     puddles = cc3d.connected_components(mask_puddles, connectivity=4)
-    removed_puddles = cc3d.dust(puddles, connectivity=4, threshold=threshold)
+    #removed_puddles = cc3d.dust(puddles, connectivity=4, threshold=threshold) old
+    main_basin = cc3d.largest_k(np.where(puddles == 0., 0, 1), k = 1, connectivity = 4)
     if isinstance(ds, xr.Dataset):
-        ds = ds.elevation * removed_puddles  # np.where(removed_puddles == 0., np.nan, 1)
+        ds = ds.elevation * np.where(main_basin == 0., 0, 1) #np.where(removed_puddles == 0., 0, 1)
     else:
-        ds = ds * removed_puddles #np.where(removed_puddles == 0., np.nan, 1)
+        ds = ds * np.where(main_basin == 0., 0, 1) #np.where(removed_puddles == 0., 0, 1)
 
     return ds
 
