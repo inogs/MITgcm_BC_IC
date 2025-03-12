@@ -25,8 +25,8 @@ dataset = 'med-cmcc-sal-rean-d'
 var = 'so'
 
 sal = cm.open_dataset(
-    username = 'fgiordanoCMS',
-    password = 'giordy98÷CMEMS',
+    username = '...',
+    password = '...',
     dataset_id = dataset,
     #dataset_version = version,
     variables = [var],
@@ -52,8 +52,8 @@ dataset = 'cmems_mod_med_phy_my_4.2km_static'
 var = 'deptho_lev'
 
 bathyCMS = cm.open_dataset(
-    username = 'fgiordanoCMS',
-    password = 'giordy98÷CMEMS',
+    username = '...',
+    password = '...',
     dataset_id = dataset,
     #dataset_version = version,
     variables = [var],

@@ -1,0 +1,9 @@
+README
+
+The `read_excel*` python scripts were originally written by gcossarini; the one for point sources (`read_excelAllegato_1_do_json_for_7domains_with_salinity.py`) was then expanded to include the loading, subsetting and averaging of salinity from Copernicus to the points.
+
+The pipeline is simple: `read_excel*` loads info from the Excel files and creates json for each domain; `point_sources_n_rivers.py` then reads the json of a domain, together with the static data generated during the previous phase, and returns the 3D mask and values of relaxation salinity (for point sources only) and the 2D values of pollutant concentration as MITgcm-appropriate binaries, as well as an aggregated netCDF, if needed.
+
+The river component is left to be developed due to some choices to be made (e.g. release of pollutant at the river "start+1" to avoid conflicts with OBCS masks), but the basics should be similar to the point sources part. Some work could be needed to allow one function to manage both cases.
+
+`read_excel` would fall in the category "scripts we keep for ourselves", as it produces the json files that are the starting point of the model setup (if the paradigm has not changed); this is reflected in their less polished coding. Some parameters are hard-coded; the start and end time of the CMS reanalysis we choose (now from 2012 to 2021 included), maybe to be changed so it matches the MER reanalysis timespan, and the `dilut_fac` (it came up talking with gcossarini, for now set), which should represent water getting fresher in the bottom cells due to point discharge; for the moment it is unused and instead a value of `water_freshener` of 0.5 [PSU] is used to reduce the Copernicus salinity and increase the buoyancy of the water.
