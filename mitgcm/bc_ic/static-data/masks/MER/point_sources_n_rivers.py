@@ -84,24 +84,36 @@ def fill_sal_conc(
 		z,
 		depth,
 		json_data,
-		water_freshener = 0.5
+		water_freshener = 0.5,
+		only_one = False
 ):
 	"""
 	Given the info for the point sources and the spatial static data,
 	fills the relaxation salinity array, creates the salinity mask and
 	fills the concentration array.
 	"""
-
-	for jd in json_data:
+	if only_one:
+		jd = json_data[0]
 		lon = jd['Long']
 		lat = jd['Lat']
 		i = np.argmin(np.abs(x.values - lon))
 		j = np.argmin(np.abs(y.values - lat))
-		k = np.argmin(np.abs(z.values + depth[j,i].values))
+		k = np.argmin(np.abs(z.values + depth[j, i].values))
 		rel_S = jd['CMS_avgS'] - water_freshener
 		c = jd['Carico_Ingresso_AE'] * jd['Dilution_factor']
-		relax_sal[k,j,i] = rel_S
-		conc[j,i] = c
+		relax_sal[k, j, i] = rel_S
+		conc[j, i] = c
+	else:
+		for jd in json_data:
+			lon = jd['Long']
+			lat = jd['Lat']
+			i = np.argmin(np.abs(x.values - lon))
+			j = np.argmin(np.abs(y.values - lat))
+			k = np.argmin(np.abs(z.values + depth[j,i].values))
+			rel_S = jd['CMS_avgS'] - water_freshener
+			c = jd['Carico_Ingresso_AE'] * jd['Dilution_factor']
+			relax_sal[k,j,i] = rel_S
+			conc[j,i] = c
 	return relax_sal, xr.where(relax_sal == 0., 0., 1.), conc
 
 #
@@ -141,7 +153,8 @@ def fill_river_conc(
 		z,
 		depth,
 		json_data,
-		water_freshener = 0.5
+		water_freshener = 0.5,
+		only_one = False,
 ):
 	"""
 	Given the info for the point sources and the spatial static data,
@@ -149,15 +162,26 @@ def fill_river_conc(
 	fills the concentration array.
 	"""
 	#TODO...
-	for jd in json_data:
+	if only_one:
+		jd = json_data[0]
 		lon = jd['Long']
 		lat = jd['Lat']
 		i = np.argmin(np.abs(x.values - lon))
 		j = np.argmin(np.abs(y.values - lat))
-		k = np.argmin(np.abs(z.values + depth[j,i].values))
+		k = np.argmin(np.abs(z.values + depth[j, i].values))
 		c = jd['Carico_Ingresso_AE'] * jd['Dilution_factor']
-		relax_sal[k,j,i] = rel_S
-		conc[j,i] = c
+		relax_sal[k, j, i] = rel_S
+		conc[j, i] = c
+	else:
+		for jd in json_data:
+			lon = jd['Long']
+			lat = jd['Lat']
+			i = np.argmin(np.abs(x.values - lon))
+			j = np.argmin(np.abs(y.values - lat))
+			k = np.argmin(np.abs(z.values + depth[j,i].values))
+			c = jd['Carico_Ingresso_AE'] * jd['Dilution_factor']
+			relax_sal[k,j,i] = rel_S
+			conc[j,i] = c
 	return relax_sal, xr.where(relax_sal == 0., 0., 1.), conc
 
 #
@@ -177,10 +201,10 @@ def main():
 	sewage_path = base_path + domain + f'/PointSource_wSalt_{domain}.json'
 	sewers = open_point_sources(sewage_path)
 	
-	relax_salt, mask_salt, tracer_conc = fill_sal_conc(relax_salt, tracer_conc, coords['xc'], coords['yc'], coords['zc'], coords['depth'], sewers)
+	relax_salt, mask_salt, tracer_conc = fill_sal_conc(relax_salt, tracer_conc, coords['xc'], coords['yc'], coords['zc'], coords['depth'], sewers, only_one=True)
 	write_binary_files(relax_salt, mask_salt, tracer_conc, out_dir=static_path,
-					   relax_path='relax_salinity_'+domain+'.bin', conc_path='tracer_concetrations_'+domain+'.bin',
-					   mask_path='S_source_mask_MER_'+domain+'.bin', aggreg_path='sewage_discharges_'+domain+'.bin')
+					   relax_path='bottom_sources_S_relaxation_'+domain+'.bin', conc_path='conc01_bottom_fluxes_'+domain+'.bin',
+					   mask_path='bottom_sources_S_mask_'+domain+'.bin', aggreg_path='sewage_discharges_'+domain+'.bin')
 	#
 	rivers_path = base_path + domain + f'/RiverSource_{domain}.json'
 	rivers = open_river_sources(rivers_path)
