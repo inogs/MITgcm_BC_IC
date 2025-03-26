@@ -5,13 +5,18 @@ import pandas as pd
 import json
 import os
 import copernicusmarine as cm
+import sys
 
 # Allegato 1 of sewage discharge locations 
 excel_file = 'Allegato_1_Capitolato_Tecnico_B32_B35_modificato.xlsx'
+base_path = sys.argv[1]
+data_path = sys.argv[2]
 # select the n. of domain from 1 to 7 and name the json file
 WHICH_DOMAIN=1
 #output_file = 'PointSource_nordadri.json'
-domains=['NAD','SAD','ION','SIC','TYR','LIG','SAR']
+#domains=['NAD','SAD','ION','SIC','TYR','LIG','SAR']
+domains=['NAD','SAD','ION','SIC','TYR','LIG','SAR', 'GoT', 'GSN']
+
 
 # subset and read CMS reanalysis for salinity
 x0, x1 = 6.5000, 21.0000 #12.22265625, 16.07421875
@@ -71,12 +76,15 @@ print('Loaded datasets!')
 file_name = os.path.splitext(os.path.basename(excel_file))[0]
 
 # Read the Excel file into a DataFrame
-df = pd.read_excel(excel_file)
+df = pd.read_excel(data_path+excel_file)
 
 for id, namedomain in enumerate(domains):
 
   # Filter rows where the value in column 'Dominio' is id+1 (valid number from 1 to 7)
-  filtered_df = df[df['Dominio'] == id+1]
+  if id < 7:
+      filtered_df = df[df['Dominio'] == id + 1]
+  else:
+      filtered_df = df[df['Sotto-Dominio'] == 8]  ### hardcoded horribly !!!
 
   # Select only the interesting columns 
   selected_columns = filtered_df[['Codice_Scarico', 'Lat', 'Long','Carico_Ingresso_AE', 'Nome_scarico','Regione']]
@@ -119,7 +127,7 @@ for id, namedomain in enumerate(domains):
       "discharge_points": filtered_rows
   }
   # build the output file name
-  output_file = 'PointSource_wSalt_' + domains[id] + '.json'
+  output_file = base_path + domains[id] + '/PointSource_wSalt_' + domains[id] + '.json'
   # Write the final JSON structure to a JSON file
   with open(output_file, 'w') as json_file:
       json.dump(output_data, json_file, indent=4)

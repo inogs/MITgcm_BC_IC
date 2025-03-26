@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 import pandas as pd
+import sys
 import json
 
 #
@@ -115,6 +116,7 @@ def write_binary_files(
 		conc_path = 'tracer_concetrations.bin',
 		mask_path = 'S_source_mask_MER_V3.dat',
 		aggreg_path = 'sewage_discharges.nc',
+		conc_in_time = 365,
 ):
 	"""
 	Given the the relaxation salinity, salinity mask and concentration
@@ -122,29 +124,68 @@ def write_binary_files(
 	"""
 	
 	relax_sal.values.astype('f4').tofile(out_dir+relax_path)
-	conc.values.astype('f4').tofile(out_dir+conc_path)
+	if conc_in_time == 1:
+		conc.values.astype('f4').tofile(out_dir+conc_path)
+	else:
+		np.stack([conc.values]*conc_in_time).astype('f4').tofile(out_dir+conc_path)
 	S_mask.values.astype('f4').tofile(out_dir+mask_path)
 	if aggregated:
 		xr.merge([relax_sal.rename('relax_salinity'), conc.rename('tracer_conc')]).to_netcdf(out_dir+aggreg_path)
 
 #
+
+def fill_river_conc(
+		conc,
+		x,
+		y,
+		z,
+		depth,
+		json_data,
+		water_freshener = 0.5
+):
+	"""
+	Given the info for the point sources and the spatial static data,
+	fills the relaxation salinity array, creates the salinity mask and
+	fills the concentration array.
+	"""
+	#TODO...
+	for jd in json_data:
+		lon = jd['Long']
+		lat = jd['Lat']
+		i = np.argmin(np.abs(x.values - lon))
+		j = np.argmin(np.abs(y.values - lat))
+		k = np.argmin(np.abs(z.values + depth[j,i].values))
+		c = jd['Carico_Ingresso_AE'] * jd['Dilution_factor']
+		relax_sal[k,j,i] = rel_S
+		conc[j,i] = c
+	return relax_sal, xr.where(relax_sal == 0., 0., 1.), conc
+
+#
+
+
 ###
 
 def main():
-	static_path = 'data/MIT_static_no_lagoons_no_isles.nc'
-	relax_salt = initialise_sal(xr.open_dataset(static_path).hFacC)
-	tracer_conc = initialise_conc_fluxes(xr.open_dataset(static_path).hFacC)
-	coords = get_spatial_masks(xr.open_dataset(static_path))
+	base_path = sys.argv[1]
+	domain = sys.argv[2]
+	static_path = base_path + domain + '/'
+	print('\n', static_path, '\n')
+	relax_salt = initialise_sal(xr.open_dataset(static_path + 'MIT_static_' + domain + '.nc').hFacC)
+	tracer_conc = initialise_conc_fluxes(xr.open_dataset(static_path + 'MIT_static_' + domain + '.nc').hFacC)
+	coords = get_spatial_masks(xr.open_dataset(static_path + 'MIT_static_' + domain + '.nc'))
 	
-	domain = 'NAD'
-	sewage_path = f'data/PointSource_wSalt_{domain}.json'
+	sewage_path = base_path + domain + f'/PointSource_wSalt_{domain}.json'
 	sewers = open_point_sources(sewage_path)
-	### rivers_path = '...'
-	### rivers = open_river_sources(rivers_path)
-	### ... 
 	
 	relax_salt, mask_salt, tracer_conc = fill_sal_conc(relax_salt, tracer_conc, coords['xc'], coords['yc'], coords['zc'], coords['depth'], sewers)
-	write_binary_files(relax_salt, mask_salt, tracer_conc)
+	write_binary_files(relax_salt, mask_salt, tracer_conc, out_dir=static_path,
+					   relax_path='relax_salinity_'+domain+'.bin', conc_path='tracer_concetrations_'+domain+'.bin',
+					   mask_path='S_source_mask_MER_'+domain+'.bin', aggreg_path='sewage_discharges_'+domain+'.bin')
+	#
+	rivers_path = base_path + domain + f'/RiverSource_{domain}.json'
+	rivers = open_river_sources(rivers_path)
+
+
 
 #
 
